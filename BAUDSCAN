@@ -1,0 +1,28 @@
+10 REM Baud/parity scanner for serial diagnostics
+20 VDU 4:DIM cnt%(255)
+30 SYS "OS_SerialOp",5,7:REM Stream 7 input
+40 mask%=&04:sample%=300
+50 FOR mode%=0 TO 2
+60   SYS "OS_SerialOp",1,mode%
+70   FOR idx%=0 TO 15
+80     SYS "OS_SerialOp",0,idx%,mode%
+90     REM Flush pending bytes
+100     REPEAT:SYS "OS_SerialOp",4 TO s%
+110       IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%
+120     UNTIL (s% AND mask%)=0
+130     REM Sample for ~3 seconds
+140     FOR i%=0 TO 255:cnt%(i%)=0:NEXT
+150     total%=0:start%=TIME
+160     REPEAT
+170       SYS "OS_SerialOp",4 TO s%
+180       IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:cnt%(b%)=cnt%(b%)+1:total%=total%+1
+190     UNTIL TIME-start%>sample%
+200     REM Find most common byte
+210     max%=0:top%=0
+220     FOR i%=0 TO 255
+230       IF cnt%(i%)>max% THEN max%=cnt%(i%):top%=i%
+240     NEXT
+250     PRINT "mode=";mode%;" idx=";idx%;" bytes=";total%;" top=~";~top%;" x";max%
+260   NEXT idx%
+270 NEXT mode%
+280 PRINT "Scan complete"

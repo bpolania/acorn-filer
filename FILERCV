@@ -1,0 +1,27 @@
+10 REM Serial file receiver - saves to RECEIVE
+20 VDU 4
+30 SYS "OS_SerialOp",0,6,0:REM 9600 8N1
+40 SYS "OS_SerialOp",1,0:REM No parity
+50 SYS "OS_SerialOp",5,7:REM Stream 7 input
+60 mask%=&04:timeout%=6000
+70 PRINT "Waiting for data..."
+80 REM Wait for first byte
+90 start%=TIME
+100 REPEAT
+110   SYS "OS_SerialOp",4 TO s%
+120 UNTIL (s% AND mask%) OR (TIME-start%>timeout%)
+130 IF (s% AND mask%)=0 THEN PRINT "No data received.":END
+140 REM Open output file
+150 file%=OPENOUT("RECEIVE")
+160 IF file%=0 THEN PRINT "Cannot create file":END
+170 PRINT "Receiving file..."
+180 bytes%=0:last%=TIME
+190 REPEAT
+200   SYS "OS_SerialOp",4 TO s%
+210   IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:BPUT#file%,b%:bytes%=bytes%+1:last%=TIME
+220 UNTIL (TIME-last%>timeout%)
+230 CLOSE#file%
+240 PRINT "Received ";bytes%;" bytes"
+250 REM Set BASIC filetype &FFB
+260 SYS "OS_File",18,"RECEIVE",&FFB
+270 PRINT "File saved as RECEIVE (BASIC type)"

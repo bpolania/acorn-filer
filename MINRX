@@ -1,0 +1,10 @@
+10 REM Minimal serial receiver - shows hex bytes
+20 VDU 4
+30 SYS "OS_SerialOp",0,6,0:REM 9600 8N1
+40 SYS "OS_SerialOp",1,0:REM No parity
+50 SYS "OS_SerialOp",5,7:REM Stream 7 input
+60 mask%=&04
+70 REPEAT
+80   SYS "OS_SerialOp",4 TO s%
+90   IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:PRINT "~";~b%;" ";
+100 UNTIL FALSE

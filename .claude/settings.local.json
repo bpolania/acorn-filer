@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(copy:*)",
+      "Bash(cmd /c copy:*)",
+      "WebSearch",
+      "Bash(powershell:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}
