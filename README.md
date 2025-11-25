@@ -27,6 +27,12 @@ Receives data over serial and saves to a file.
 - Sets BASIC filetype (&FFB) automatically
 - 1-minute timeout after last byte received
 
+### FLAGTEST - OS_SerialOp Status Test
+Tests OS_SerialOp,4 with -1 parameter to examine status flags.
+- Displays character and R2 flag values in hex and binary
+- Shows bit 1 status to identify character availability
+- Runs continuously until key press
+
 ## File Transfer to Archimedes
 
 ### Via DOS Diskette (720k)
@@ -38,6 +44,7 @@ copy MINRX A:\MINRX
 copy SERIALRW A:\SERIALRW
 copy BAUDSCAN A:\BAUDSCAN
 copy FILERCV A:\FILERCV
+copy FLAGTEST A:\FLAGTEST
 ```
 3. On Archimedes, set BASIC filetype:
 ```
@@ -45,6 +52,7 @@ copy FILERCV A:\FILERCV
 *SETTYPE SERIALRW &FFB
 *SETTYPE BAUDSCAN &FFB
 *SETTYPE FILERCV &FFB
+*SETTYPE FLAGTEST &FFB
 ```
 
 ## Testing Strategy
