@@ -1,11 +1,11 @@
-10 REM Full serial send-wait-receive with &04 bit
+10 REM Serial send-receive using OS_SerialOp,4,-1
 20 VDU 4
-30 SYS "OS_SerialOp",0,6,0:REM 9600 8N1
-40 SYS "OS_SerialOp",1,0:REM No parity
-50 SYS "OS_SerialOp",5,7:REM Stream 7 input
-60 SYS "OS_SerialOp",6,7:REM Stream 7 output
-70 REM *FX 8,0 to disable input handshaking
-80 mask%=&04:timeout%=6000
+30 SYS "OS_SerialOp",0,6,0:REM Set serial state
+40 SYS "OS_SerialOp",1,0:REM 8N1 format
+50 SYS "OS_SerialOp",5,7:REM 9600 baud receive
+60 SYS "OS_SerialOp",6,7:REM 9600 baud transmit
+70 REM Use *FX 8,0 if handshaking issues occur
+80 mask%=&02:timeout%=6000
 90 REPEAT
 100   INPUT "Enter message to send: "msg$
 110   IF msg$="" THEN msg$=" "
@@ -16,13 +16,14 @@
 160   PRINT "Message complete."
 170   start%=TIME
 180   REPEAT
-190     SYS "OS_SerialOp",4 TO s%
-200   UNTIL (s% AND mask%) OR (TIME-start%>timeout%)
-210   IF (s% AND mask%)=0 THEN PRINT "No response received.":GOTO 90
+190     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
+200   UNTIL (flags% AND mask%)=0 OR (TIME-start%>timeout%)
+210   IF (flags% AND mask%)<>0 THEN PRINT "No response received.":GOTO 90
+215   PRINT CHR$(b%);
 220   last%=TIME
 230   REPEAT
-240     SYS "OS_SerialOp",4 TO s%
-250     IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:PRINT CHR$(b%);:last%=TIME
+240     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
+250     IF (flags% AND mask%)=0 THEN PRINT CHR$(b%);:last%=TIME
 260   UNTIL (TIME-last%>timeout%)
 270   PRINT
 280 UNTIL FALSE
