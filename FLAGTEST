@@ -1,0 +1,25 @@
+10 REM Test OS_SerialOp,4 return values with -1 parameter
+20 VDU 4
+30 SYS "OS_SerialOp",0,0,0:REM Clear serial state bits
+40 SYS "OS_SerialOp",1,0:REM 8N1 format
+50 SYS "OS_SerialOp",5,7:REM 9600 baud receive
+60 SYS "OS_SerialOp",6,7:REM 9600 baud transmit
+70 PRINT "Testing OS_SerialOp,4,-1 return values"
+80 PRINT "Press any key to stop"
+90 PRINT
+100 PRINT "Character | Flags(R2)| Binary flags (7-0)  | Bit 1"
+110 PRINT "----------|----------|---------------------|------"
+120 count%=0
+130 REPEAT
+140   SYS "OS_SerialOp",4,-1 TO ,char%;flags%
+150   PRINT "~";~char%;"    | ~";~flags%;"    | ";
+160   FOR bit%=7 TO 0 STEP -1
+170     IF (flags% AND (1<<bit%)) THEN PRINT "1"; ELSE PRINT "0";
+180     IF bit%=4 THEN PRINT " ";
+190   NEXT
+200   IF (flags% AND 2) THEN PRINT " | SET" ELSE PRINT " | CLR"
+210   count%=count%+1
+220   IF count%>10 THEN count%=0:PRINT:PRINT "Continuing... Press any key to stop":PRINT
+230 UNTIL INKEY(0)<>-1
+240 PRINT
+250 PRINT "Test complete"

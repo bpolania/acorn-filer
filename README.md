@@ -39,6 +39,12 @@ The `310` folder contains the original programs with additional features:
 - Detailed mode scanning (BAUDSCAN)
 - Hardware handshaking control
 
+### FLAGTEST - OS_SerialOp Status Test
+Tests OS_SerialOp,4 with -1 parameter to examine status flags.
+- Displays character and R2 flag values in hex and binary
+- Shows bit 1 status to identify character availability
+- Runs continuously until key press
+
 ## File Transfer to Archimedes
 
 ### Via DOS Diskette (720k)
@@ -50,6 +56,7 @@ copy MINRX A:\MINRX
 copy SERIALRW A:\SERIALRW
 copy BAUDSCAN A:\BAUDSCAN
 copy FILERCV A:\FILERCV
+copy FLAGTEST A:\FLAGTEST
 ```
 3. On Archimedes, set BASIC filetype:
 ```
@@ -57,6 +64,7 @@ copy FILERCV A:\FILERCV
 *SETTYPE SERIALRW &FFB
 *SETTYPE BAUDSCAN &FFB
 *SETTYPE FILERCV &FFB
+*SETTYPE FLAGTEST &FFB
 ```
 
 ### Alternative: Using EXEC Command

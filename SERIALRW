@@ -1,11 +1,11 @@
-10 VDU 4
-20 SYS "OS_SerialOp",0,6,0
-30 SYS "OS_SerialOp",1,0
-40 SYS "OS_SerialOp",5,7
-50 SYS "OS_SerialOp",6,7
-60 mask%=&04
-70 PRINT "Serial Read/Write (420/I version)"
-80 PRINT "Type message and press Enter to send"
+10 REM Serial send-receive using OS_SerialOp,4,-1
+20 VDU 4
+30 SYS "OS_SerialOp",0,6,0:REM Set serial state
+40 SYS "OS_SerialOp",1,0:REM 8N1 format
+50 SYS "OS_SerialOp",5,7:REM 9600 baud receive
+60 SYS "OS_SerialOp",6,7:REM 9600 baud transmit
+70 REM Use *FX 8,0 if handshaking issues occur
+80 mask%=&02:timeout%=6000
 90 REPEAT
 100   INPUT "Send: "msg$
 110   IF msg$="" THEN msg$=" "
@@ -16,8 +16,14 @@
 160   PRINT "Waiting for response..."
 170   timeout%=TIME+3000
 180   REPEAT
-190     SYS "OS_SerialOp",4 TO s%
-200     IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:PRINT CHR$(b%);
-210   UNTIL TIME>timeout%
-220   PRINT
-230 UNTIL FALSE
+190     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
+200   UNTIL (flags% AND mask%)=0 OR (TIME-start%>timeout%)
+210   IF (flags% AND mask%)<>0 THEN PRINT "No response received.":GOTO 90
+215   PRINT CHR$(b%);
+220   last%=TIME
+230   REPEAT
+240     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
+250     IF (flags% AND mask%)=0 THEN PRINT CHR$(b%);:last%=TIME
+260   UNTIL (TIME-last%>timeout%)
+270   PRINT
+280 UNTIL FALSE
