@@ -1,29 +1,55 @@
-10 REM Serial send-receive using OS_SerialOp,4,-1
-20 VDU 4
-30 SYS "OS_SerialOp",0,6,0:REM Set serial state
-40 SYS "OS_SerialOp",1,0:REM 8N1 format
-50 SYS "OS_SerialOp",5,7:REM 9600 baud receive
-60 SYS "OS_SerialOp",6,7:REM 9600 baud transmit
-70 REM Use *FX 8,0 if handshaking issues occur
-80 mask%=&02:timeout%=6000
-90 REPEAT
-100   INPUT "Send: "msg$
-110   IF msg$="" THEN msg$=" "
-120   FOR i%=1 TO LEN(msg$)
-130     SYS "OS_SerialOp",3,ASC(MID$(msg$,i%,1))
-140   NEXT
-150   SYS "OS_SerialOp",3,13
-160   PRINT "Waiting for response..."
-170   timeout%=TIME+3000
-180   REPEAT
-190     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
-200   UNTIL (flags% AND mask%)=0 OR (TIME-start%>timeout%)
-210   IF (flags% AND mask%)<>0 THEN PRINT "No response received.":GOTO 90
-215   PRINT CHR$(b%);
-220   last%=TIME
-230   REPEAT
-240     SYS "OS_SerialOp",4,-1 TO ,b%;flags%
-250     IF (flags% AND mask%)=0 THEN PRINT CHR$(b%);:last%=TIME
-260   UNTIL (TIME-last%>timeout%)
-270   PRINT
-280 UNTIL FALSE
+10 REM ArmGPT - Serial Chat Client for Acorn Archimedes (RISC OS BASIC)
+20 REM
+30 REM Instructions:
+40 REM - Type your prompt at the ">" and press Enter.
+50 REM - ArmGPT sends your text to the serial port and prints the reply as it arrives.
+60 REM - Press Enter on an empty line to quit.
+70 REM
+
+80 SYS "OS_Byte",2,2
+90 VDU 4
+
+95 REM ---- Intro screen ----
+96 CLS
+97 PRINT "  /$$$$$$                           /$$$$$$  /$$$$$$$  /$$$$$$$$"
+98 PRINT " /$$__  $$                         /$$__  $$| $$__  $$|__  $$__/"
+99 PRINT "| $$  \ $$  /$$$$$$  /$$$$$$/$$$$ | $$  \__/| $$  \ $$   | $$   "
+100 PRINT "| $$$$$$$$ /$$__  $$| $$_  $$_  $$| $$ /$$$$| $$$$$$$/   | $$   "
+101 PRINT "| $$__  $$| $$  \__/| $$ \ $$ \ $$| $$|_  $$| $$____/    | $$   "
+102 PRINT "| $$  | $$| $$      | $$ | $$ | $$| $$  \ $$| $$         | $$   "
+103 PRINT "| $$  | $$| $$      | $$ | $$ | $$|  $$$$$$/| $$         | $$   "
+104 PRINT "|__/  |__/|__/      |__/ |__/ |__/ \______/ |__/         |__/   "
+105 PRINT
+106 PRINT "Press any key to continue..."
+107 dummy%=GET
+108 CLS
+109 REM ----------------------
+
+110 REM Serial setup (keep as-is for your current link settings)
+120 SYS "OS_SerialOp",0,4+32,0
+130 SYS "OS_SerialOp",1,9
+140 SYS "OS_SerialOp",5,7
+150 SYS "OS_SerialOp",6,7
+
+160 PRINT "Type a prompt and press Enter. Empty line quits."
+170 PRINT
+
+180 REPEAT
+190 INPUT ">", Q$
+200 IF Q$="" THEN END
+
+210 FOR i%=1 TO LEN(Q$)
+220 SYS "OS_SerialOp",3,ASC(MID$(Q$,i%,1))
+230 NEXT
+240 SYS "OS_SerialOp",3,13
+250 SYS "OS_SerialOp",3,10
+
+260 REM Read and display response from serial (streams forever)
+270 REPEAT
+280 SYS "OS_SerialOp",4 TO byte%,; flags%
+290 IF (flags% AND 2)=0 THEN
+300 PRINT CHR$(byte%);
+310 ENDIF
+360 UNTIL FALSE
+
+370 UNTIL FALSE
