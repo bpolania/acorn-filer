@@ -1,0 +1,24 @@
+10 VDU 4:DIM cnt%(255)
+20 SYS "OS_SerialOp",5,7
+30 mask%=&04:sample%=300
+40 FOR mode%=0 TO 2
+50   SYS "OS_SerialOp",1,mode%
+60   FOR idx%=0 TO 15
+70     SYS "OS_SerialOp",0,idx%,mode%
+80     REPEAT:SYS "OS_SerialOp",4 TO s%
+90       IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%
+100     UNTIL (s% AND mask%)=0
+110     FOR i%=0 TO 255:cnt%(i%)=0:NEXT
+120     total%=0:start%=TIME
+130     REPEAT
+140       SYS "OS_SerialOp",4 TO s%
+150       IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:cnt%(b%)=cnt%(b%)+1:total%=total%+1
+160     UNTIL TIME-start%>sample%
+170     max%=0:top%=0
+180     FOR i%=0 TO 255
+190       IF cnt%(i%)>max% THEN max%=cnt%(i%):top%=i%
+200     NEXT
+210     PRINT "mode=";mode%;" idx=";idx%;" bytes=";total%;" top=~";~top%;" x";max%
+220   NEXT idx%
+230 NEXT mode%
+240 PRINT "Scan complete"

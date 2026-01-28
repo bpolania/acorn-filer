@@ -1,0 +1,23 @@
+10 VDU 4
+20 SYS "OS_SerialOp",0,6,0
+30 SYS "OS_SerialOp",1,0
+40 SYS "OS_SerialOp",5,7
+50 mask%=&04:timeout%=6000
+60 PRINT "Waiting for data..."
+70 start%=TIME
+80 REPEAT
+90   SYS "OS_SerialOp",4 TO s%
+100 UNTIL (s% AND mask%) OR (TIME-start%>timeout%)
+110 IF (s% AND mask%)=0 THEN PRINT "No data received.":END
+120 file%=OPENOUT("RECEIVE")
+130 IF file%=0 THEN PRINT "Cannot create file":END
+140 PRINT "Receiving file..."
+150 bytes%=0:last%=TIME
+160 REPEAT
+170   SYS "OS_SerialOp",4 TO s%
+180   IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:BPUT#file%,b%:bytes%=bytes%+1:last%=TIME
+190 UNTIL (TIME-last%>timeout%)
+200 CLOSE#file%
+210 PRINT "Received ";bytes%;" bytes"
+220 SYS "OS_File",18,"RECEIVE",&FFB
+230 PRINT "File saved as RECEIVE (BASIC type)"

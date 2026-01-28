@@ -1,0 +1,26 @@
+10 VDU 4
+20 SYS "OS_SerialOp",0,6,0
+30 SYS "OS_SerialOp",1,0
+40 SYS "OS_SerialOp",5,7
+50 SYS "OS_SerialOp",6,7
+60 mask%=&04:timeout%=6000
+70 REPEAT
+80   INPUT "Enter message to send: "msg$
+90   IF msg$="" THEN msg$=" "
+100   FOR i%=1 TO LEN(msg$)
+110     SYS "OS_SerialOp",3,ASC(MID$(msg$,i%,1))
+120   NEXT
+130   SYS "OS_SerialOp",3,13
+140   PRINT "Message complete."
+150   start%=TIME
+160   REPEAT
+170     SYS "OS_SerialOp",4 TO s%
+180   UNTIL (s% AND mask%) OR (TIME-start%>timeout%)
+190   IF (s% AND mask%)=0 THEN PRINT "No response received.":GOTO 70
+200   last%=TIME
+210   REPEAT
+220     SYS "OS_SerialOp",4 TO s%
+230     IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO b%:PRINT CHR$(b%);:last%=TIME
+240   UNTIL (TIME-last%>timeout%)
+250   PRINT
+260 UNTIL FALSE

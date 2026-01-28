@@ -2,30 +2,42 @@
 
 This repository contains BBC BASIC programs and utilities for serial communication between modern computers (Raspberry Pi/PC) and Acorn Archimedes computers using RS-423.
 
-## BBC BASIC Programs
+## Model Compatibility
+
+Both Acorn Archimedes 310 and 420/I models use RS-423 serial ports (not RS-232). The main folder contains simplified scripts optimized for the 420/I, while the `310` folder contains the original full-featured versions.
+
+## BBC BASIC Programs (420/I Version)
 
 ### MINRX - Minimal Receiver
-Diagnostic program that displays received bytes in hexadecimal format.
+Simple diagnostic program that displays received bytes in hexadecimal.
 - Shows each byte as `~XX` where XX is the hex value
-- Useful for verifying reception and debugging framing issues
+- Streamlined for basic reception testing
 
-### SERIALRW - Send/Receive Program  
-Full bidirectional serial communication program.
+### SERIALRW - Send/Receive Program
+Bidirectional serial communication program.
 - Sends user input to serial port
-- Waits for response with 1-minute timeout
+- Waits for response with 30-second timeout
 - Displays received characters
 
 ### BAUDSCAN - Baud Rate Scanner
-Automatically detects correct baud rate and parity settings.
-- Tests common baud rates (300-115200)
-- Shows byte counts and most common received byte
-- Helps identify correct communication parameters
+Quick baud rate detection utility.
+- Tests all 16 baud rate indices
+- Shows byte counts for each setting
+- Simplified scanning process
 
 ### FILERCV - File Receiver
 Receives data over serial and saves to a file.
 - Saves received data to "RECEIVE" file
 - Sets BASIC filetype (&FFB) automatically
-- 1-minute timeout after last byte received
+- 30-second timeout after last byte
+
+## 310 Folder (Original Full-Featured Versions)
+
+The `310` folder contains the original programs with additional features:
+- Extended timeouts (60 seconds)
+- Error byte filtering (MINRX)
+- Detailed mode scanning (BAUDSCAN)
+- Hardware handshaking control
 
 ## File Transfer to Archimedes
 
@@ -46,6 +58,37 @@ copy FILERCV A:\FILERCV
 *SETTYPE BAUDSCAN &FFB
 *SETTYPE FILERCV &FFB
 ```
+
+### Alternative: Using EXEC Command
+
+If files appear as text files on the Archimedes, you can convert them to BASIC programs using the EXEC command:
+
+1. First, ensure files are transferred to the Archimedes (via diskette or serial)
+2. For each file, enter BASIC and use EXEC to import:
+```
+BASIC
+NEW
+*EXEC MINRX
+SAVE "MINRX"
+```
+3. Repeat for each program:
+```
+NEW
+*EXEC SERIALRW
+SAVE "SERIALRW"
+
+NEW
+*EXEC BAUDSCAN  
+SAVE "BAUDSCAN"
+
+NEW
+*EXEC FILERCV
+SAVE "FILERCV"
+```
+
+The EXEC command reads a text file and executes each line as if typed at the keyboard. This converts text files containing BASIC programs into proper BASIC files that can be RUN directly.
+
+**Note:** Files must have CR (0x0D) line endings for proper import on Acorn systems. The files in this repository are already formatted with correct CR line endings.
 
 ## Testing Strategy
 

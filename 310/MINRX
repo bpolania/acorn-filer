@@ -1,0 +1,29 @@
+10 VDU 4
+20 SYS "OS_SerialOp",0,6,0
+30 SYS "OS_SerialOp",1,0
+40 SYS "OS_SerialOp",5,7
+50 *FX 203,0,0
+60 *FX 204,0,0
+70 mask%=&04:errmask%=&07
+80 PRINT "Filtering 0x02 and error bytes..."
+90 PRINT "----------------------------------------"
+100 count%=0:valid%=0:noise%=0:lastnoise%=0
+110 REPEAT
+120   SYS "OS_SerialOp",4 TO s%
+130   IF (s% AND mask%) THEN GOSUB 200 ELSE WAIT 1
+140 UNTIL FALSE
+200 REM Drain buffer completely
+210 REPEAT
+220   REM Check for errors (bits 0-2: overrun, parity, framing)
+230   IF (s% AND errmask%)<>mask% THEN SYS "OS_SerialOp",2 TO b%:noise%=noise%+1:GOTO 290
+240   SYS "OS_SerialOp",2 TO b%
+250   count%=count%+1
+260   IF b%=2 THEN noise%=noise%+1:GOTO 290
+270   valid%=valid%+1
+280   IF b%>31 AND b%<127 THEN c$=CHR$(b%) ELSE c$="."
+285   PRINT "Valid #";valid%;": ~";~b%;" '";c$;"'"
+290   SYS "OS_SerialOp",4 TO s%
+300 UNTIL (s% AND mask%)=0
+310 REM Only show noise count every 100 ignored bytes
+320 IF noise%-lastnoise%>=100 THEN PRINT "[Ignored ";noise%;" noise/error bytes]":lastnoise%=noise%
+330 RETURN
