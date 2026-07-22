@@ -115,9 +115,9 @@
  1150   PRINT TAB(x%,y%+i%);l$
  1160 NEXT
  1170 COLOUR 7
- 1180 PROCcentre(y%+arth%+1,cols%,"Serial Chat Client for Acorn Archimedes")
+ 1180 PROCcentre(y%+arth%+1,cols%,"ChatGPT on a 1987 Acorn Archimedes")
  1190 COLOUR 6
- 1200 PROCcentre(y%+arth%+2,cols%,"RS-423  .  9600 8N1  .  RISC OS BASIC")
+ 1200 PROCcentre(y%+arth%+2,cols%,"the machine that named ARM  .  now it talks back")
  1210 COLOUR 7
  1220 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
  1230 REPEAT UNTIL GET=13           :REM wait for RETURN only
