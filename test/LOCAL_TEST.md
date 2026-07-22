@@ -16,7 +16,16 @@ already tested on hardware, so here it's just a means to feed replies back.
                                              └──────────────────────────────┘
 ```
 
-## Quick path — no emulator (`acorn_sim.py`)
+## Most faithful — browser MODE 12 mockup (`acorn_mode12.html`)
+
+`acorn_mode12.html` renders ACORN the way it looks on a real Acorn Archimedes:
+a true white MODE 12 screen (80x32) drawn pixel-by-pixel in an 8x12 system font,
+with the inverted black status bar, blue `you >` / red `arm >` prompts, and the
+reply streamed back — inside a beige monitor with a subtle CRT glow. Open it in
+any browser, click the screen, press RETURN, and chat (canned replies). This is
+the closest reproduction of the real look-and-feel without hardware.
+
+## Terminal stand-in — quick, no emulator (`acorn_sim.py`)
 
 If you just want to see ACORN's flow and look-and-feel immediately, skip the
 emulator entirely:

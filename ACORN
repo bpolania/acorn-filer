@@ -24,9 +24,9 @@
   240 REM
   250 PROCscreen:done%=FALSE
   260 REPEAT
-  270   COLOUR 3:PRINT "you > ";
+  270   COLOUR 4:PRINT "you > ";
   280   INPUT LINE ""q$
-  290   COLOUR 7
+  290   COLOUR 0
   300   IF q$="" THEN done%=TRUE ELSE PROCsend(q$):PROCreply
   310 UNTIL done%
   320 PROCbye
@@ -69,7 +69,7 @@
   670   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
   680   IF (flags% AND 2)=0 THEN PROCshow(byte%):got%=TRUE
   690 UNTIL got% OR (TIME-start%>waitmax%)
-  700 IF NOT got% THEN COLOUR 1:PRINT "...the line stays silent...":COLOUR 7:ENDPROC
+  700 IF NOT got% THEN COLOUR 1:PRINT "...the line stays silent...":COLOUR 0:ENDPROC
   710 REM -- stream until the link falls idle --
   720 last%=TIME
   730 REPEAT
@@ -106,10 +106,10 @@
  1030 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
  1040 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
  1050 IF cols%<artw% THEN cols%=artw%
- 1060 CLS
+ 1060 COLOUR 128+7:CLS             :REM white background (the Acorn default)
  1070 x%=(cols%-artw%) DIV 2:IF x%<0 THEN x%=0
  1080 y%=(rows%-arth%) DIV 2-2:IF y%<3 THEN y%=3
- 1090 COLOUR 6                     :REM cyan, nearest to the Arm teal
+ 1090 COLOUR 4                     :REM RISC OS blue for the wordmark
  1100 PRINT TAB(0,1);STRING$(cols%-1,"=")
  1110 PRINT TAB(0,rows%-2);STRING$(cols%-1,"=")
  1120 RESTORE 3000
@@ -117,14 +117,14 @@
  1140   READ l$
  1150   PRINT TAB(x%,y%+i%);l$
  1160 NEXT
- 1170 COLOUR 7
+ 1170 COLOUR 0
  1180 PROCcentre(y%+arth%+1,cols%,"ChatGPT on a 1987 Acorn Archimedes")
- 1190 COLOUR 6
+ 1190 COLOUR 4
  1200 PROCcentre(y%+arth%+2,cols%,"the machine that named ARM  .  now it talks back")
- 1210 COLOUR 7
+ 1210 COLOUR 0
  1220 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
  1230 REPEAT UNTIL GET=13           :REM wait for RETURN only
- 1240 COLOUR 7:CLS
+ 1240 COLOUR 0:CLS
  1250 ENDPROC
  1260 REM
  1270 DEF PROCcentre(row%,cols%,t$)
@@ -136,22 +136,22 @@
  1330 LOCAL cols%,rows%,bar$,r$,pad%
  1340 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
  1350 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
- 1360 REM -- top status bar: black on white, full width --
+ 1360 REM -- top status bar: white on black, full width (inverted strip) --
  1370 bar$=" ArmGPT":r$="a 1987 original "
  1380 pad%=cols%-1-LEN(bar$)-LEN(r$):IF pad%<1 THEN pad%=1
- 1390 COLOUR 128+7:COLOUR 0
+ 1390 COLOUR 128+0:COLOUR 7
  1400 PRINT TAB(0,0);bar$;STRING$(pad%," ");r$;
  1410 REM -- conversation scrolls below the bar; row 0 stays put --
  1420 VDU 28,0,rows%-1,cols%-1,1
- 1430 COLOUR 128+0:COLOUR 7:CLS
- 1440 COLOUR 6:PRINT "ArmGPT is online. The serial link is open."
- 1450 COLOUR 7:PRINT "Say something and press RETURN.  An empty line closes the link."
+ 1430 COLOUR 128+7:COLOUR 0:CLS
+ 1440 COLOUR 4:PRINT "ArmGPT is online. The serial link is open."
+ 1450 COLOUR 0:PRINT "Say something and press RETURN.  An empty line closes the link."
  1460 PRINT
  1470 ENDPROC
  1480 REM
  1490 REM Print the "arm >" speaker label, then stream the reply
  1500 DEF PROCreply
- 1510 COLOUR 6:PRINT "arm > ";:COLOUR 7
+ 1510 COLOUR 1:PRINT "arm > ";:COLOUR 0
  1520 PROCreceive
  1530 PRINT
  1540 ENDPROC
