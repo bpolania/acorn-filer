@@ -97,8 +97,9 @@ class Server:
 
     def banner(self):
         return ("server port: %s\n"
-                "  -> in the ArmGPT repo (main branch):\n"
-                "       python3 serial_codex_interface.py --port %s"
+                "  -> in the ArmGPT repo (main branch), using ITS venv python\n"
+                "     (system python3 lacks pyserial):\n"
+                "       ./venv/bin/python serial_codex_interface.py --port %s"
                 % (self.path, self.path))
 
     def ask(self, prompt):

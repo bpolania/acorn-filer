@@ -56,11 +56,12 @@ End-to-end flow, verified on this machine:
    python3 acorn_sim.py --server
    #  -> server port: /dev/ttysNNN
    ```
-2. **Terminal B** — point the server at that pty (needs `codex` installed and
-   signed in):
+2. **Terminal B** — point the server at that pty, **using the ArmGPT venv's
+   Python** (system `python3` lacks `pyserial` and will crash on startup).
+   Needs `codex` installed and signed in:
    ```bash
    cd ~/Documents/GitHub/ArmGPT      # on the main branch
-   python3 serial_codex_interface.py --port /dev/ttysNNN
+   ./venv/bin/python serial_codex_interface.py --port /dev/ttysNNN
    ```
 3. Back in **Terminal A**, press RETURN → RETURN, then chat. Codex takes
    ~20–60s per reply (it sends nothing until finished), so the sim waits up to
