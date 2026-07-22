@@ -12,7 +12,8 @@ Both Acorn Archimedes 310 and 420/I models use RS-423 serial ports (not RS-232).
 Interactive chat client: type a prompt, ACORN sends it over the serial port and streams the reply back.
 - Opens with a full-screen splash (auto-centred to the current screen mode) showing the "armGPT" wordmark — lowercase "arm" in Arm's rounded logo style, rendered as solid blocks (the `#` character is redefined to a solid block); press RETURN to continue
 - Authentic RISC OS look (MODE 12): white background, black text, with an inverted black status bar pinned across the top and the conversation scrolling below it; a red `arm >` label marks the machine's replies
-- Type at the `you >` prompt and press RETURN; empty line (or ESCAPE) quits
+- DOS-style conversation menu down the left (blue bordered panel, `CHATS` title, white selection bar): `TAB` switches conversation, `Ctrl-N` starts a new one, and each conversation keeps its own local scrollback. The border is drawn with custom double-line box characters defined via `VDU 23`. (The AI itself is stateless per message, so conversations are a local grouping on the Acorn side.)
+- Type at the `you >` prompt and press RETURN; `ESCAPE` quits
 - Reads the received byte correctly from R1 and tests the carry flag for data-ready
 - Returns to the prompt after each reply using idle-gap detection (tunable `waitmax%` / `idlegap%`)
 - Re-sends bytes when the output buffer is full, so nothing is dropped under RTS/CTS handshaking
