@@ -85,8 +85,15 @@ class Mock:
 class Server:
     """Relay to the ArmGPT server over a pseudo-terminal."""
     def __init__(self):
-        self.master, slave = os.openpty()
-        self.path = os.ttyname(slave)
+        self.master, self.slave = os.openpty()
+        self.path = os.ttyname(self.slave)
+        # Turn off the pty's line-discipline echo, or our own prompt bounces
+        # straight back and gets read as the "reply". (The server side opens
+        # this same pty in raw mode too, but we must not depend on its timing.)
+        a = termios.tcgetattr(self.slave)
+        a[3] &= ~(termios.ECHO | termios.ECHONL | termios.ICANON)   # lflag
+        a[1] &= ~termios.ONLCR                                      # oflag
+        termios.tcsetattr(self.slave, termios.TCSANOW, a)
 
     def banner(self):
         return ("server port: %s\n"
