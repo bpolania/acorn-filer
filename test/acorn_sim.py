@@ -187,10 +187,16 @@ def main():
 
     backend = Server() if args.server else Mock(args.delay)
 
+    if args.server:
+        # Print the pty path FIRST so you can start the server, then continue.
+        sys.stdout.write("\n" + backend.banner() + "\n\n")
+        sys.stdout.write("In another terminal, start that server (Ollama must be\n"
+                         "running). Then press RETURN here to open the chat.\n")
+        sys.stdout.flush()
+        sys.stdin.readline()
+
     splash()
     status_bar()
-    if args.server:
-        w(YELLOW + backend.banner() + "\n\n")
 
     try:
         while True:
