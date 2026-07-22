@@ -24,7 +24,7 @@
   240 REM
   250 PROCscreen:done%=FALSE
   260 REPEAT
-  270   COLOUR 4:PRINT "you > ";
+  270   COLOUR 0:PRINT "you > ";
   280   INPUT LINE ""q$
   290   COLOUR 0
   300   IF q$="" THEN done%=TRUE ELSE PROCsend(q$):PROCreply
@@ -102,14 +102,15 @@
   990 REM Full-screen splash: centres the wordmark, waits for RETURN
  1000 DEF PROCbanner
  1010 LOCAL cols%,rows%,i%,x%,y%,l$,artw%,arth%
- 1020 artw%=44:arth%=6
+ 1020 artw%=57:arth%=7
  1030 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
  1040 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
  1050 IF cols%<artw% THEN cols%=artw%
  1060 COLOUR 128+7:CLS             :REM white background (the Acorn default)
  1070 x%=(cols%-artw%) DIV 2:IF x%<0 THEN x%=0
  1080 y%=(rows%-arth%) DIV 2-2:IF y%<3 THEN y%=3
- 1090 COLOUR 4                     :REM RISC OS blue for the wordmark
+ 1085 VDU 23,35,255,255,255,255,255,255,255,255 :REM redefine "#" as a solid block
+ 1090 COLOUR 0                     :REM black wordmark and rules
  1100 PRINT TAB(0,1);STRING$(cols%-1,"=")
  1110 PRINT TAB(0,rows%-2);STRING$(cols%-1,"=")
  1120 RESTORE 3000
@@ -119,7 +120,7 @@
  1160 NEXT
  1170 COLOUR 0
  1180 PROCcentre(y%+arth%+1,cols%,"ChatGPT on a 1987 Acorn Archimedes")
- 1190 COLOUR 4
+ 1190 COLOUR 0
  1200 PROCcentre(y%+arth%+2,cols%,"the machine that named ARM  .  now it talks back")
  1210 COLOUR 0
  1220 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
@@ -144,7 +145,7 @@
  1410 REM -- conversation scrolls below the bar; row 0 stays put --
  1420 VDU 28,0,rows%-1,cols%-1,1
  1430 COLOUR 128+7:COLOUR 0:CLS
- 1440 COLOUR 4:PRINT "ArmGPT is online. The serial link is open."
+ 1440 COLOUR 0:PRINT "ArmGPT is online. The serial link is open."
  1450 COLOUR 0:PRINT "Say something and press RETURN.  An empty line closes the link."
  1460 PRINT
  1470 ENDPROC
@@ -156,11 +157,12 @@
  1530 PRINT
  1540 ENDPROC
  1550 REM
- 1560 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded ---
- 1570 REM --- style (figlet "puffy") fused with a capitalised GPT ---
- 3000 DATA "                         ___    ___   _____"
- 3010 DATA "                        (  _`\ (  _`\(_   _)"
- 3020 DATA "   _ _  _ __   ___ ___  | ( (_)| |_) ) | |"
- 3030 DATA " /'_` )( '__)/' _ ` _ `\| |___ | ,__/' | |"
- 3040 DATA "( (_| || |   | ( ) ( ) || (_, )| |     | |"
- 3050 DATA "`\__,_)(_)   (_) (_) (_)(____/'(_)     (_)"
+ 1560 REM --- "ARMGPT" wordmark (figlet "banner3"); "#" is redefined ---
+ 1570 REM --- to a solid block at line 1085 so the letters are filled ---
+ 3000 DATA "   ###    ########  ##     ##  ######   ########  ########"
+ 3010 DATA "  ## ##   ##     ## ###   ### ##    ##  ##     ##    ##"
+ 3020 DATA " ##   ##  ##     ## #### #### ##        ##     ##    ##"
+ 3030 DATA "##     ## ########  ## ### ## ##   #### ########     ##"
+ 3040 DATA "######### ##   ##   ##     ## ##    ##  ##           ##"
+ 3050 DATA "##     ## ##    ##  ##     ## ##    ##  ##           ##"
+ 3060 DATA "##     ## ##     ## ##     ##  ######   ##           ##"
