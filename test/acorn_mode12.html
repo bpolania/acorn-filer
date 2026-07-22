@@ -146,14 +146,19 @@ function emit(str,f='k'){ for(const ch of str){ if(ch==='\n'){ nl(); continue; }
 
 // ---- content ----
 const ART=[
-"   ###    ########  ##     ##  ######   ########  ########",
-"  ## ##   ##     ## ###   ### ##    ##  ##     ##    ##",
-" ##   ##  ##     ## #### #### ##        ##     ##    ##",
-"##     ## ########  ## ### ## ##   #### ########     ##",
-"######### ##   ##   ##     ## ##    ##  ##           ##",
-"##     ## ##    ##  ##     ## ##    ##  ##           ##",
-"##     ## ##     ## ##     ##  ######   ##           ##"];
-const ARTW=57;
+"                                   ######     ######   ##########",
+"                                  ########   ########  ##########",
+"                                 ###    ###  ###   ###     ##",
+"   ####    #  ##  #  ###  ###   ###      ##  ###    ##     ##",
+" #######   ###### ############  ##           ###    ##     ##",
+" ##   ###  ###    ###  ###  ##  ##           #########     ##",
+"      ###  ##     ##   ##   ##  ##    #####  ########      ##",
+"  #######  ##     ##   ##   ##  ##      ###  ###           ##",
+" ##   ###  ##     ##   ##   ##  ###      ##  ###           ##",
+" ##   ###  ##     ##   ##   ##   ###     ##  ###           ##",
+" ########  ##     ##   ##   ##    #########  ###           ##",
+"  #### ##  ##     ##   ##   ##     ######     #            ##"];
+const ARTW=65;
 const CANNED=[
  "Hello from 1987. I am ArmGPT, running on your Archimedes.",
  "Every one of these words is squeezing down an RS-423 wire at 9600 baud.",
@@ -168,10 +173,10 @@ function drawSplash(){
   clearAll('w'); cursorAt=null;
   put(0,1,"=".repeat(78),'k');
   const ax=(COLS-ARTW)>>1;
-  ART.forEach((l,i)=>putBlocks(ax,10+i,l,'k'));
-  put(centre("ChatGPT on a 1987 Acorn Archimedes"),18,"ChatGPT on a 1987 Acorn Archimedes",'k');
-  const t2="the machine that named ARM  .  now it talks back"; put(centre(t2),19,t2,'k');
-  put(centre("Press RETURN to continue"),26,"Press RETURN to continue",'k');
+  ART.forEach((l,i)=>putBlocks(ax,8+i,l,'k'));
+  put(centre("ChatGPT on a 1987 Acorn Archimedes"),21,"ChatGPT on a 1987 Acorn Archimedes",'k');
+  const t2="the machine that named ARM  .  now it talks back"; put(centre(t2),22,t2,'k');
+  put(centre("Press RETURN to continue"),27,"Press RETURN to continue",'k');
   put(0,30,"=".repeat(78),'k');
   render();
 }

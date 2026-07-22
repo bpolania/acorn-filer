@@ -102,7 +102,7 @@
   990 REM Full-screen splash: centres the wordmark, waits for RETURN
  1000 DEF PROCbanner
  1010 LOCAL cols%,rows%,i%,x%,y%,l$,artw%,arth%
- 1020 artw%=57:arth%=7
+ 1020 artw%=65:arth%=12
  1030 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
  1040 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
  1050 IF cols%<artw% THEN cols%=artw%
@@ -157,12 +157,17 @@
  1530 PRINT
  1540 ENDPROC
  1550 REM
- 1560 REM --- "ARMGPT" wordmark (figlet "banner3"); "#" is redefined ---
- 1570 REM --- to a solid block at line 1085 so the letters are filled ---
- 3000 DATA "   ###    ########  ##     ##  ######   ########  ########"
- 3010 DATA "  ## ##   ##     ## ###   ### ##    ##  ##     ##    ##"
- 3020 DATA " ##   ##  ##     ## #### #### ##        ##     ##    ##"
- 3030 DATA "##     ## ########  ## ### ## ##   #### ########     ##"
- 3040 DATA "######### ##   ##   ##     ## ##    ##  ##           ##"
- 3050 DATA "##     ## ##    ##  ##     ## ##    ##  ##           ##"
- 3060 DATA "##     ## ##     ## ##     ##  ######   ##           ##"
+ 1560 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded logo ---
+ 1570 REM --- style; "#" is redefined to a solid block (line 1085) ---
+ 3000 DATA "                                   ######     ######   ##########"
+ 3010 DATA "                                  ########   ########  ##########"
+ 3020 DATA "                                 ###    ###  ###   ###     ##"
+ 3030 DATA "   ####    #  ##  #  ###  ###   ###      ##  ###    ##     ##"
+ 3040 DATA " #######   ###### ############  ##           ###    ##     ##"
+ 3050 DATA " ##   ###  ###    ###  ###  ##  ##           #########     ##"
+ 3060 DATA "      ###  ##     ##   ##   ##  ##    #####  ########      ##"
+ 3070 DATA "  #######  ##     ##   ##   ##  ##      ###  ###           ##"
+ 3080 DATA " ##   ###  ##     ##   ##   ##  ###      ##  ###           ##"
+ 3090 DATA " ##   ###  ##     ##   ##   ##   ###     ##  ###           ##"
+ 3100 DATA " ########  ##     ##   ##   ##    #########  ###           ##"
+ 3110 DATA "  #### ##  ##     ##   ##   ##     ######     #            ##"
