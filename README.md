@@ -56,6 +56,13 @@ Tests OS_SerialOp,4 with -1 parameter to examine status flags.
 - Shows bit 1 status to identify character availability
 - Runs continuously until key press
 
+## Local Testing (Mac, no hardware)
+
+To exercise ACORN's flow and look-and-feel without an Archimedes, run the real
+program inside a RISC OS emulator and feed replies from a host-side bridge
+(canned mock replies, or the live `ArmGPT` server via a pseudo-terminal). See
+[`test/LOCAL_TEST.md`](test/LOCAL_TEST.md).
+
 ## File Transfer to Archimedes
 
 ### Via DOS Diskette (720k)

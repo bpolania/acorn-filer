@@ -1,0 +1,20 @@
+   10 REM DIAL - connect RPCEmu's serial "modem" to the host bridge, then run ACORN
+   20 REM
+   30 REM Host side first:  python3 test/serial_bridge.py --mock
+   40 REM RPCEmu:           Settings > Serial > TCP modem
+   50 REM Then in RISC OS:  RUN this, it dials the bridge and CHAINs ACORN.
+   60 REM
+   70 host$="127.0.0.1:5623"           :REM where serial_bridge.py is listening
+   80 SYS "OS_SerialOp",5,7            :REM 9600 receive
+   90 SYS "OS_SerialOp",6,7            :REM 9600 transmit
+  100 REM -- send the Hayes dial string; CR (13) executes it --
+  110 cmd$="ATDT"+host$+CHR$13
+  120 FOR i%=1 TO LEN(cmd$)
+  130   SYS "OS_SerialOp",3,ASC(MID$(cmd$,i%,1))
+  140 NEXT
+  150 PRINT "Dialling ";host$;" ..."
+  160 REM -- let the modem connect, then discard its ECHO + CONNECT text --
+  170 T%=TIME:REPEAT UNTIL TIME-T%>300
+  180 REPEAT:SYS "OS_SerialOp",4,-1 TO ,b%;f%:UNTIL (f% AND 2)<>0
+  190 PRINT "Connected. Starting ACORN..."
+  200 CHAIN "ACORN"
