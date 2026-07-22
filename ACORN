@@ -22,12 +22,12 @@
   220 waitmax%=3000 :REM how long to wait for a reply to START (30s)
   230 idlegap%=300  :REM silence that means the reply has ENDED (3s)
   240 REM
-  250 PRINT "Type a prompt and press RETURN. Empty line quits."
-  260 PRINT
-  270 done%=FALSE
-  280 REPEAT
-  290   INPUT LINE ">" q$
-  300   IF q$="" THEN done%=TRUE ELSE PROCsend(q$):PROCreceive
+  250 PROCscreen:done%=FALSE
+  260 REPEAT
+  270   COLOUR 3:PRINT "you > ";
+  280   INPUT LINE ""q$
+  290   COLOUR 7
+  300   IF q$="" THEN done%=TRUE ELSE PROCsend(q$):PROCreply
   310 UNTIL done%
   320 PROCbye
   330 END
@@ -35,6 +35,7 @@
   350 REM ================= procedures =================
   360 REM
   370 DEF PROCsetup
+  375 MODE 12                       :REM 80x32, 16 colours - the retro canvas
   380 SYS "OS_Byte",2,0             :REM keyboard is the input stream (rx still buffered)
   390 VDU 4                         :REM print text at the text cursor
   400 SYS "OS_SerialOp",0,4+32,0    :REM link/handshake state (your verified settings)
@@ -67,7 +68,7 @@
   670   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
   680   IF (flags% AND 2)=0 THEN PROCshow(byte%):got%=TRUE
   690 UNTIL got% OR (TIME-start%>waitmax%)
-  700 IF NOT got% THEN PRINT "(no response)":ENDPROC
+  700 IF NOT got% THEN COLOUR 1:PRINT "...the line stays silent...":COLOUR 7:ENDPROC
   710 REM -- stream until the link falls idle --
   720 last%=TIME
   730 REPEAT
@@ -90,9 +91,10 @@
   900 ENDPROC
   910 REM
   920 DEF PROCbye
+  925 VDU 26:COLOUR 128+0:COLOUR 7:CLS :REM restore full screen, white on black
   930 SYS "OS_Byte",2,0
   940 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
-  950 PRINT'"Bye."
+  950 PRINT'"Link closed. Bye."
   960 END
   970 ENDPROC
   980 REM
@@ -128,8 +130,33 @@
  1280 PRINT TAB((cols%-LEN(t$)) DIV 2,row%);t$
  1290 ENDPROC
  1300 REM
- 1310 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded ---
- 1320 REM --- style (figlet "puffy") fused with a capitalised GPT ---
+ 1310 REM Sierra-style screen: fixed status bar + scrolling window
+ 1320 DEF PROCscreen
+ 1330 LOCAL cols%,rows%,bar$,r$,pad%
+ 1340 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
+ 1350 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
+ 1360 REM -- top status bar: black on white, full width --
+ 1370 bar$=" ArmGPT":r$="a 1987 original "
+ 1380 pad%=cols%-1-LEN(bar$)-LEN(r$):IF pad%<1 THEN pad%=1
+ 1390 COLOUR 128+7:COLOUR 0
+ 1400 PRINT TAB(0,0);bar$;STRING$(pad%," ");r$;
+ 1410 REM -- conversation scrolls below the bar; row 0 stays put --
+ 1420 VDU 28,0,rows%-1,cols%-1,1
+ 1430 COLOUR 128+0:COLOUR 7:CLS
+ 1440 COLOUR 6:PRINT "ArmGPT is online. The serial link is open."
+ 1450 COLOUR 7:PRINT "Say something and press RETURN.  An empty line closes the link."
+ 1460 PRINT
+ 1470 ENDPROC
+ 1480 REM
+ 1490 REM Print the "arm >" speaker label, then stream the reply
+ 1500 DEF PROCreply
+ 1510 COLOUR 6:PRINT "arm > ";:COLOUR 7
+ 1520 PROCreceive
+ 1530 PRINT
+ 1540 ENDPROC
+ 1550 REM
+ 1560 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded ---
+ 1570 REM --- style (figlet "puffy") fused with a capitalised GPT ---
  3000 DATA "                         ___    ___   _____"
  3010 DATA "                        (  _`\ (  _`\(_   _)"
  3020 DATA "   _ _  _ __   ___ ___  | ( (_)| |_) ) | |"
