@@ -32,7 +32,7 @@ import tty
 
 # ---- palette (SGR codes) ----
 FG = {'k': 30, 'r': 31, 'g': 32, 'y': 33, 'b': 34, 'w': 37}
-BG = {'k': 40, 'r': 41, 'b': 44, 'w': 47}
+BG = {'k': 40, 'r': 41, 'y': 43, 'b': 44, 'w': 47}
 
 ART = [
  "                                   ######     ######   ##########",
@@ -318,13 +318,54 @@ class App:
         ctr(self.rows - 5, "Press RETURN to continue")
         self.cursor = None
         self.render()
-        while True:                       # wait for RETURN
-            ch = sys.stdin.read(1)
-            if ch in ("\r", "\n"):
-                return
-            if ch == "\x1b" or ch == "\x03":
-                self.quit = True
-                return
+        # --- DOS-style twinkle on the 'a', while waiting for RETURN ---
+        base = [row[:] for row in self.cells]
+        gx, gy = ax + 7, ay + 6           # a bright highlight on the 'a'
+        prev, t = [], 0
+        while True:
+            cur = []
+            for dx, dy, col in self._spark(t):
+                x, y = gx + dx, gy + dy
+                if 0 <= x < self.cols and 0 <= y < self.rows:
+                    cur.append((x, y, col))
+            dirty = {(x, y) for x, y, _ in prev} | {(x, y) for x, y, _ in cur}
+            for x, y, _ in prev:
+                self.cells[y][x] = base[y][x]          # revert to the letter
+            for x, y, col in cur:
+                self.cells[y][x] = (" ", col, col)     # light the spark
+            self._poke(dirty)
+            prev = cur
+            t += 1
+            r, _, _ = select.select([sys.stdin], [], [], 0.08)
+            if r:
+                ch = sys.stdin.read(1)
+                if ch in ("\r", "\n"):
+                    return
+                if ch in ("\x1b", "\x03"):
+                    self.quit = True
+                    return
+
+    # A tiny frame table (portable to the Acorn as a CASE on a frame counter):
+    # a point that blooms into a 4-point cross and fades, then a pause, on loop.
+    def _spark(self, t):
+        p = t % 26
+        if p in (18, 22):
+            return [(0, 0, 'w')]
+        if p in (19, 21):
+            return [(0, 0, 'w'), (1, 0, 'y'), (-1, 0, 'y'), (0, 1, 'y'), (0, -1, 'y')]
+        if p == 20:
+            return [(0, 0, 'w'), (1, 0, 'w'), (-1, 0, 'w'), (0, 1, 'w'), (0, -1, 'w')]
+        return []
+
+    def _poke(self, coords):
+        """Redraw just the given cells (used by the splash animation)."""
+        out = ["\x1b[?25l"]
+        for x, y in coords:
+            ch, fg, bg = self.cells[y][x]
+            out.append("\x1b[%d;%dH\x1b[%d;%dm%s\x1b[0m" %
+                       (y + 1, x + 1, FG[fg], BG[bg], ch))
+        sys.stdout.write("".join(out))
+        sys.stdout.flush()
 
     # ---- input ----
     def submit(self):
