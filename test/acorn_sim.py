@@ -399,16 +399,63 @@ class App:
             print("Link closed. Bye.")
 
 
+def run_codex(armgpt_dir):
+    """Auto-launch the ArmGPT Codex server against our own pty - one command,
+    no second terminal, no pty-path copying."""
+    import subprocess
+    d = os.path.expanduser(armgpt_dir)
+    if not os.path.isfile(os.path.join(d, "serial_codex_interface.py")):
+        sys.exit("serial_codex_interface.py not found in %s\n"
+                 "Pass --armgpt-dir <path to the ArmGPT repo, on its main branch>." % d)
+    py = os.path.join(d, "venv", "bin", "python")
+    if not os.path.isfile(py):
+        py = "python3"
+    backend = Server()
+    log = "/tmp/acorn_codex_server.log"
+    cmd = [py, "serial_codex_interface.py", "--port", backend.path]
+    print("Launching Codex server:\n  %s\n  (cwd %s, log %s)" % (" ".join(cmd), d, log))
+    proc = subprocess.Popen(cmd, cwd=d, stdout=open(log, "w"),
+                            stderr=subprocess.STDOUT)
+    for _ in range(20):                       # wait up to ~5s for it to come up
+        time.sleep(0.25)
+        if proc.poll() is not None:
+            sys.exit("Server exited immediately. Last lines of %s:\n%s"
+                     % (log, _tail(log)))
+    print("Server is up. Opening the chat...")
+    time.sleep(0.5)
+    try:
+        App(backend).run()
+    finally:
+        proc.terminate()
+
+
+def _tail(path, n=15):
+    try:
+        with open(path) as f:
+            return "".join(f.readlines()[-n:])
+    except OSError:
+        return "(no log)"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--mock", action="store_true", help="canned replies (default)")
     mode.add_argument("--server", action="store_true",
-                      help="relay to the ArmGPT server via a pty")
+                      help="relay to a server you start yourself, via a pty")
+    mode.add_argument("--codex", action="store_true",
+                      help="auto-launch the ArmGPT Codex server (one command, "
+                           "no second terminal)")
+    ap.add_argument("--armgpt-dir", default="~/Documents/GitHub/ArmGPT",
+                    help="ArmGPT repo location for --codex")
     ap.add_argument("--delay", type=float, default=1.0,
                     help="mock: think-time seconds before replying (default 1)")
     args = ap.parse_args()
+
+    if args.codex:
+        run_codex(args.armgpt_dir)
+        return
 
     backend = Server() if args.server else Mock(args.delay)
 

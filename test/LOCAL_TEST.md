@@ -48,7 +48,21 @@ pixels, use the emulator path below.
 
 The `ArmGPT` repo's **`main`** branch has `serial_codex_interface.py`, which
 answers each message by shelling out to `codex exec` (the ChatGPT/Codex CLI).
-End-to-end flow, verified on this machine:
+
+**Easiest — one command** (the sim launches the server against its own pty, so
+there's no second terminal and no pty-path copying):
+
+```bash
+cd acorn-filer/test
+python3 acorn_sim.py --codex
+#   (assumes the ArmGPT repo at ~/Documents/GitHub/ArmGPT on its main branch;
+#    override with --armgpt-dir <path>. Server log: /tmp/acorn_codex_server.log)
+```
+
+Press RETURN past the splash and chat — real Codex answers in ~20–60s.
+
+**Manual (two terminals)** — the same thing wired by hand, verified on this
+machine:
 
 1. **Terminal A** — start the sim; it prints a pty device path, then waits:
    ```bash
