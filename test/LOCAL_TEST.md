@@ -36,24 +36,44 @@ Two ways to supply replies:
 RISC OS 5 has a **free, legal** ROM, and RPCEmu's *extended* fork is the only
 emulator here with real serial redirection.
 
-### 1. Install RPCEmu (extended fork, for serial)
+### 1. Build RPCEmu (extended fork, for serial)
 
-Build/download **rpcemu-extended** (has parallel/serial redirection and a
-universal macOS binary; Apple Silicon runs the interpreter core):
+The **rpcemu-extended** fork has the serial redirection we need:
 <https://github.com/andrewtimmins/rpcemu-extended>
 
-### 2. Get the RISC OS 5 ROM (free)
+```bash
+git clone https://github.com/andrewtimmins/rpcemu-extended
+cd rpcemu-extended
+brew install cmake ninja pkg-config wxwidgets sdl2 libvncserver
+./build-macos.sh --arch arm64      # Apple Silicon: interpreter slice only
+```
 
-From RISC OS Open, download the **IOMD softload ROM** and copy the `riscos`
-file from `soft/!Boot/Resources/SoftLoad/` into RPCEmu's `roms/` directory.
-Walkthrough: <https://www.riscosopen.org/wiki/documentation/show/RPCEmu%20and%20RISC%20OS%205%20on%20Mac%20OS%20X>
+The build stages a runnable folder at `releases/macos/arm64/` containing the
+`rpcemu` binary plus its resource dirs. Run it from inside that folder
+(`./rpcemu`) so it finds its resources. (The `x86_64` recompiler slice needs a
+second, Rosetta Homebrew prefix and isn't necessary just to run.)
+
+### 2. RISC OS 5 ROM — already included
+
+This fork **bundles RISC OS 5.30** (`roms/ROM530`) and a hard-disc image, and
+its default config (`configs/Default.cfg`) already sets `rom_dir=ROM530` and
+`serial_com1_mode=2` (TCP modem). So there's no separate ROM to source, and the
+serial step (below) is pre-configured.
 
 ### 3. Get ACORN into the emulator
 
 RPCEmu shares a host folder as **HostFS** (it appears as a disc icon on the
-RISC OS icon bar). Copy `ACORN` and `test/DIAL` from this repo into that shared
-folder. Then, in RISC OS, turn each text listing into a runnable BASIC program
-(same `*EXEC` trick as the main README):
+RISC OS icon bar), located at `machines/Default/hostfs/` inside the staged
+folder. Copy `ACORN` and `test/DIAL` there. To have RISC OS see them as text
+(so `*EXEC` works), give each a `,fff` filetype suffix on the host side:
+
+```bash
+cp ACORN      <rpcemu>/machines/Default/hostfs/ACORN,fff
+cp test/DIAL  <rpcemu>/machines/Default/hostfs/DIAL,fff
+```
+
+Then, in RISC OS, turn each listing into a runnable BASIC program (same `*EXEC`
+trick as the main README):
 
 ```
 *BASIC
@@ -68,9 +88,10 @@ QUIT
 
 ### 4. Point the emulated serial at the bridge
 
-In RPCEmu: **Settings → Serial → TCP modem**. (This mode dials outbound over
-TCP; there is no auto-answer, which is why `DIAL` exists.) Leave the baud at
-9600 if asked.
+The bundled default config already has COM1 in **TCP modem** mode
+(`serial_com1_mode=2`). If you use a different config, set it via
+**Settings → Serial → TCP modem**. (This mode dials outbound over TCP; there is
+no auto-answer, which is why `DIAL` exists.)
 
 ### 5. Start the bridge on the Mac
 
