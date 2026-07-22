@@ -36,12 +36,13 @@ python3 acorn_sim.py            # mock replies; --delay 3 fakes think-time
 python3 acorn_sim.py --server   # drive the real ArmGPT server via a pty
 ```
 
-This reproduces ACORN's screens in your terminal — the full-screen splash, the
-black-on-white status bar with the conversation scrolling below it, and the
-coloured `you >` / `arm >` prompts with the reply streamed back as if over
-serial. Press RETURN at the splash, type a message, empty line quits. It mirrors
-ACORN's layout and colours but is a design/flow stand-in, not the RISC OS
-renderer — for the real pixels, use the emulator path below.
+This reproduces ACORN's full UI in your terminal — the solid `armGPT` splash,
+the black-on-white status bar, the **DOS conversation menu** down the left, and
+colour-coded `you >` / `arm >` prompts. Type and press RETURN to send; **TAB**
+or **up/down** switch conversation, **Ctrl-N** starts a new one, **ESC** quits.
+Each conversation keeps its own history. It mirrors ACORN's layout, menu and
+colours, but a terminal can't be a true white MODE 12 screen — for the real
+pixels, use the emulator path below.
 
 ### Real replies via the Codex CLI (no Ollama)
 
