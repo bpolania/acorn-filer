@@ -118,7 +118,7 @@ def mock_reply(prompt, count):
     if p.lower() in ("bye", "quit", "exit"):
         return "Until next boot. 73!"
     base = CANNED[count % len(CANNED)]
-    return base + "  (you said: " + p[:60] + ")"
+    return base
 
 
 # ---- connection handling ---------------------------------------------------

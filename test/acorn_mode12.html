@@ -181,12 +181,23 @@ const ART=[
 "  #### ##  ##     ##   ##   ##     ######     #            ##"];
 const ARTW=65;
 const CANNED=[
- "Hello from 1987. I am ArmGPT, running on your Archimedes.",
- "Every one of these words is squeezing down an RS-423 wire at 9600 baud.",
- "The Acorn RISC Machine was born in this very box. Ask me anything.",
- "Slower than a modern GPU by a few million times, but far more stylish."];
+ "Every word of this is arriving down an RS-423 wire at 9600 baud.",
+ "I am ArmGPT, a small model running on the machine that named ARM.",
+ "In my day we had 512K of RAM and we were grateful. Ask me anything.",
+ "Slower than a modern GPU by a few million times, but far more stylish.",
+ "A fine question for a computer from 1987. Let me ponder it a moment.",
+ "The Acorn RISC Machine was designed a few desks from where I live."];
 let nReply=0;
-function reply(p){ p=p.trim(); if(!p) return "Say something and I will answer."; if(/^(bye|quit|exit)$/i.test(p)) return "Until next boot. 73!"; return CANNED[(nReply++)%CANNED.length]+"  (you said: "+p.slice(0,50)+")"; }
+function reply(p){
+  p=p.trim().toLowerCase();
+  if(!p) return "Say something and I will answer.";
+  if(/^(bye|quit|exit)$/.test(p)) return "Until next boot. 73!";
+  if(p.indexOf("year")>=0) return "Out there it is 2026; in here it is forever 1987.";
+  if(p.indexOf("who")>=0||p.indexOf("name")>=0) return "I am ArmGPT - the machine that named ARM, now with opinions.";
+  if(p.indexOf("arm")>=0) return "ARM stands for Acorn RISC Machine - born in this very box.";
+  if(p.indexOf("hello")>=0||p.indexOf("hi")>=0||p.indexOf("hey")>=0) return "Hello from 1987! Good of you to call.";
+  return CANNED[(nReply++)%CANNED.length];
+}
 
 let state='splash', inputBuf='';
 function drawSplash(){

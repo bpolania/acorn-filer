@@ -137,7 +137,7 @@ class Mock:
         p = prompt.strip()
         if not p:
             return "Say something and I will answer."
-        r = CANNED[self.n % len(CANNED)] + "  (you said: " + p[:60] + ")"
+        r = CANNED[self.n % len(CANNED)]
         self.n += 1
         return r
 
