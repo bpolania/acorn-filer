@@ -35,6 +35,7 @@
   350 REM ================= procedures =================
   360 REM
   370 DEF PROCsetup
+  373 SYS "OS_Byte",135 TO ,,oldmode% :REM remember the mode we started in
   375 MODE 12                       :REM 80x32, 16 colours - the retro canvas
   380 SYS "OS_Byte",2,0             :REM keyboard is the input stream (rx still buffered)
   390 VDU 4                         :REM print text at the text cursor
@@ -91,7 +92,7 @@
   900 ENDPROC
   910 REM
   920 DEF PROCbye
-  925 VDU 26:COLOUR 128+0:COLOUR 7:CLS :REM restore full screen, white on black
+  925 MODE oldmode%                  :REM restore the mode we started in
   930 SYS "OS_Byte",2,0
   940 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
   950 PRINT'"Link closed. Bye."
