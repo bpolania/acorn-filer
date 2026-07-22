@@ -2,90 +2,71 @@
   :root{
     --room:#17140f; --room2:#241d14;
     --beige:#cabf9f; --beige-hi:#ded4b6; --beige-lo:#a89a75;
-    --glass:#0a0a08;
-    --ink:#e9e2cf;
+    --glass:#0a0a08; --ink:#e9e2cf;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
     min-height:100vh;
-    background:
-      radial-gradient(120% 90% at 50% -10%, var(--room2), var(--room) 70%);
-    color:var(--ink);
-    font-family:"Helvetica Neue",Arial,sans-serif;
+    background:radial-gradient(120% 90% at 50% -10%, var(--room2), var(--room) 70%);
+    color:var(--ink); font-family:"Helvetica Neue",Arial,sans-serif;
     display:flex; flex-direction:column; align-items:center;
-    padding:clamp(16px,4vw,48px) 16px 40px;
-    gap:22px;
+    padding:clamp(16px,4vw,48px) 16px 40px; gap:22px;
   }
-  header{text-align:center; max-width:720px}
+  header{text-align:center; max-width:760px}
   header h1{
     font-weight:800; letter-spacing:.14em; text-transform:uppercase;
     font-size:clamp(13px,2.4vw,16px); margin:0 0 6px; color:#e7c07a;
   }
   header p{margin:0; font-size:13px; line-height:1.5; color:#a99f89}
-
   .monitor{
-    position:relative;
-    width:min(880px, 96vw);
+    position:relative; width:min(880px, 96vw);
     background:linear-gradient(160deg,var(--beige-hi),var(--beige) 40%,var(--beige-lo));
     border-radius:26px;
     padding:clamp(20px,3.2vw,34px) clamp(20px,3.2vw,34px) clamp(34px,4.6vw,52px);
-    box-shadow:
-      0 2px 0 rgba(255,255,255,.35) inset,
-      0 -8px 22px rgba(0,0,0,.28) inset,
-      0 30px 60px -20px rgba(0,0,0,.75),
-      0 4px 10px rgba(0,0,0,.4);
+    box-shadow:0 2px 0 rgba(255,255,255,.35) inset, 0 -8px 22px rgba(0,0,0,.28) inset,
+      0 30px 60px -20px rgba(0,0,0,.75), 0 4px 10px rgba(0,0,0,.4);
   }
   .screen{
-    position:relative;
-    background:var(--glass);
-    border-radius:10px;
-    padding:14px;
+    position:relative; background:var(--glass); border-radius:10px; padding:14px;
     box-shadow:0 0 0 2px #2a2620, 0 0 0 10px #1c1913, 0 10px 30px rgba(0,0,0,.6) inset;
   }
   canvas{
     display:block; width:100%; height:auto;
     image-rendering:pixelated; image-rendering:crisp-edges;
-    border-radius:3px;
-    /* subtle phosphor bloom */
-    filter:saturate(1.05) brightness(1.02);
+    border-radius:3px; filter:saturate(1.05) brightness(1.02); cursor:default;
   }
-  /* CRT overlays */
   .screen::after{
     content:""; position:absolute; inset:14px; border-radius:3px; pointer-events:none;
-    background:
-      radial-gradient(120% 130% at 50% 50%, transparent 62%, rgba(0,0,0,.28) 100%),
+    background:radial-gradient(120% 130% at 50% 50%, transparent 62%, rgba(0,0,0,.28) 100%),
       repeating-linear-gradient(0deg, rgba(0,0,0,.045) 0 1px, transparent 1px 3px);
     mix-blend-mode:multiply;
   }
   .screen::before{
     content:""; position:absolute; inset:14px; border-radius:3px; pointer-events:none;
-    background:linear-gradient(105deg, rgba(255,255,255,.10), transparent 34%);
-    z-index:2;
+    background:linear-gradient(105deg, rgba(255,255,255,.10), transparent 34%); z-index:2;
   }
   .badge{
     position:absolute; left:0; right:0; bottom:12px; text-align:center;
     font:700 11px/1 "Helvetica Neue",Arial,sans-serif; letter-spacing:.42em;
-    text-transform:uppercase; color:#6d6448; text-indent:.42em;
-    text-shadow:0 1px 0 rgba(255,255,255,.4);
+    text-transform:uppercase; color:#6d6448; text-indent:.42em; text-shadow:0 1px 0 rgba(255,255,255,.4);
   }
   .led{
     position:absolute; right:22px; bottom:16px; width:9px; height:9px; border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #b6ffb0, #37c23a 55%, #0d5a13);
     box-shadow:0 0 8px #46e04a, 0 0 2px #000 inset;
   }
-  .hint{
-    font-size:12.5px; color:#9a9078; text-align:center; max-width:640px; line-height:1.55;
-  }
+  .hint{font-size:12.5px; color:#9a9078; text-align:center; max-width:660px; line-height:1.6;}
   .hint b{color:#cdbf98; font-weight:600}
-  @media (prefers-reduced-motion: reduce){ .cursorless{} }
+  kbd{font:600 11px/1 ui-monospace,Menlo,monospace; background:#2c281f; color:#d9cfb2;
+      border:1px solid #4a4433; border-radius:4px; padding:2px 5px;}
 </style>
 
 <header>
   <h1>ArmGPT &mdash; MODE&nbsp;12 emulation</h1>
-  <p>The ACORN chat client as it renders on a 1987 Acorn Archimedes: a real RISC&nbsp;OS
-     MODE&nbsp;12 screen &mdash; 80&times;32, the system font, black&nbsp;on&nbsp;white.
-     Click the screen and type.</p>
+  <p>The ACORN chat client on a 1987 Acorn Archimedes, now with a DOS-style
+     conversation menu. Click the screen and type; click a chat on the left to
+     switch, or <kbd>+ New chat</kbd>.</p>
 </header>
 
 <div class="monitor">
@@ -96,55 +77,95 @@
   <div class="led" title="power"></div>
 </div>
 
-<p class="hint">Press <b>RETURN</b> at the splash, then chat. An empty line closes the link.
-   Replies are canned (no server) &mdash; this mirrors the real ACORN program's look and flow.</p>
+<p class="hint">Press <b>RETURN</b> at the splash. Type and press RETURN to chat.
+   <b>Click</b> a conversation to switch, <b>+ New chat</b> to start one
+   (<kbd>Ctrl</kbd>+<kbd>N</kbd>); <kbd>Alt</kbd>+<kbd>&uarr;</kbd>/<kbd>&darr;</kbd> cycles.
+   Replies are canned (no server).</p>
 
 <script>
 "use strict";
-// ---- 8x12 bitmap font, ASCII 32..126, 12 bytes/glyph ----
-const FONT_B64 = "AAAAAAAAAAAAAAAAAAAAEBAQEBAQAAAYAAAAbGxsbAAAAAAAAAAAFBR+PCgo/khQAAAAEDh0UDAcFlQ8AAAAAGCQYhxsEhIMAAAAOGBgIHDazkR+AAAAEBAQEAAAAAAAAAAIEBAwMDAwMBAQAAAgEBAYGBgYGBAQAAAAAAAQEHw4fBAQAAAAAAAQEBB+EBAAAAAAAAAAAAAAADgwAAAAAAAAAAD+AAAAAAAAAAAAAAAAADAwAAAABAwIGBAQICBgAAAAOGxMTlZmZGw4AAAAOHgYGBgYGBh+AAAAOEwEBAgYMGB8AAAAOEwEDDgEBER4AAAADBw8LGxM/gwMAAAAfEBAeAwEBEx4AAAAOGRAeGRERGQ4AAAAfAQMCAgYEDAgAAAAOGREZDhERmQ8AAAAOGxERGw8BEw4AAAAAAAAMDAAADAwAAAAAAAAMDAAABA4AAAAAAAGHGBgHAYAAAAAAAAA/gAA/gAAAAAAAADAcA4OcMAAAAAAOEwECBAQABAQAAAAADxmXpKikp7AAAAAGDgoKGxkfEbCAAAAeERERHxERkZ8AAAAPGRAQEBAQGQ8AAAAeExERkZGREx4AAAAfEBAQHxAQEB+AAAAfmBgYHxgYGBgAAAAPGRAQE5GRmY8AAAARkZGRn5GRkZGAAAAfBAQEBAQEBB8AAAAPAwMDAwMDEh4AAAARkxYcHBYTERGAAAAYGBgYGBgYGB+AAAAxs7urraWhoaGAAAAxubmppaWjo6OAAAAOGxERkZGRGw4AAAAfEZGRnxAQEBAAAAAOGxERkZGRGw4AAAAeExETHhMREZCAAAAOGRAYDgEBkQ8AAAA/hAQEBAQEBAQAAAARERERERERGQ4AAAAxkZEZCwoKDgYAAAAgoLS2n5ubGxkAAAARmQoOBg4LETGAAAAxkQsOBgQEBAQAAAAfgQMCBgwIGB+AAAcEBAQEBAQEBAQAAAAQGAgIBAQGAgMAAAwEBAQEBAQEBAQAAAAGDhsxgAAAAAAAAAAAAAAAAAAAAAAAAAgEAAAAAAAAAAAAAAAAAB4BAQ8REx8AABAQEB4ZEZGRmR4AAAAAAA8IGBAYCA8AAAEBAQ8bERERGw8AAAAAAA4ZEZ+QGA8AAAcEBB8EBAQEBAQAAAAAAA8bERERGw8AABAQEB8ZEREREREAAAAGAA4GBgYGBh+AAAYAAA4GBgYGBgYAABgYGBkaHB4aGRmAAAAcBAQEBAQEBgOAAAAAAB8VlJSUlJSAAAAAAB8ZEREREREAAAAAAA4ZERERGQ4AAAAAAB4ZERGRGR4AAAAAAA8bERERGw8AAAAAAA+MCAgICAgAAAAAAA4ZGA4BEQ4AAAAMDB8MDAwMBAcAAAAAABERERERGw8AAAAAABGRGQsKDgYAAAAAACCgtJebGxsAAAAAABELDgYOGxGAAAAAABGRGQsKDgYAAAAAAB8DAgQMGB8AAAMGBAQEGAQEBAYAAAAEBAQEBAQEBAQAABwEBAQGAwYEBAQAAAAAAAAAGCSDAAA";
+const FONT_B64 = "AAAAAAAAAAAAAAAAAAAAEBAQEBAQAAAYAAAAbGxsbAAAAAAAAAAAFBR+PCgo/khQAAAAEDh0UDAcFlQ8AAAAAGCQYhxsEhIMAAAAOGBgIHDazkR+AAAAEBAQEAAAAAAAAAAIEBAwMDAwMBAQAAAgEBAYGBgYGBAQAAAAAAAQEHw4fBAQAAAAAAAQEBB+EBAAAAAAAAAAAAAAADgwAAAAAAAAAAD+AAAAAAAAAAAAAAAAADAwAAAABAwIGBAQICBgAAAAOGxMTlZmZGw4AAAAOHgYGBgYGBh+AAAAOEwEBAgYMGB8AAAAOEwEDDgEBER4AAAADBw8LGxM/gwMAAAAfEBAeAwEBEx4AAAAOGRAeGRERGQ4AAAAfAQMCAgYEDAgAAAAOGREZDhERmQ8AAAAOGxERGw8BEw4AAAAAAAAMDAAADAwAAAAAAAAMDAAABA4AAAAAAAGHGBgHAYAAAAAAAAA/gAA/gAAAAAAAADAcA4OcMAAAAAAOEwECBAQABAQAAAAADxmXpKikp7AAAAAGDgoKGxkfEbCAAAAeERERHxERkZ8AAAAPGRAQEBAQGQ8AAAAeExERkZGREx4AAAAfEBAQHxAQEB+AAAAfmBgYHxgYGBgAAAAPGRAQE5GRmY8AAAARkZGRn5GRkZGAAAAfBAQEBAQEBB8AAAAPAwMDAwMDEh4AAAARkxYcHBYTERGAAAAYGBgYGBgYGB+AAAAxs7urraWhoaGAAAAxubmppaWjo6OAAAAOGxERkZGRGw4AAAAfEZGRnxAQEBAAAAAOGxERkZGRGw4AAAAeExETHhMREZCAAAAOGRAYDgEBkQ8AAAA/hAQEBAQEBAQAAAARERERERERGQ4AAAAxkZEZCwoKDgYAAAAgoLS2n5ubGxkAAAARmQoOBg4LETGAAAAxkQsOBgQEBAQAAAAfgQMCBgwIGB+AAAcEBAQEBAQEBAQAAAAQGAgIBAQGAgMAAAwEBAQEBAQEBAQAAAAGDhsxgAAAAAAAAAAAAAAAAAAAAAAAAAgEAAAAAAAAAAAAAAAAAB4BAQ8REx8AABAQEB4ZEZGRmR4AAAAAAA8IGBAYCA8AAAEBAQ8bERERGw8AAAAAAA4ZEZ+QGA8AAAcEBB8EBAQEBAQAAAAAAA8bERERGw8AABAQEB8ZEREREREAAAAGAA4GBgYGBh+AAAYAAA4GBgYGBgYAABgYGBkaHB4aGRmAAAAcBAQEBAQEBgOAAAAAAB8VlJSUlJSAAAAAAB8ZEREREREAAAAAAA4ZERERGQ4AAAAAAB4ZERGRGR4AAAAAAA8bERERGw8AAAAAAA+MCAgICAgAAAAAAA4ZGA4BEQ4AAAAMDB8MDAwMBAcAAAAAABERERERGw8AAAAAABGRGQsKDgYAAAAAACCgtJebGxsAAAAAABELDgYOGxGAAAAAABGRGQsKDgYAAAAAAB8DAgQMGB8AAAMGBAQEGAQEBAYAAAAEBAQEBAQEBAQAABwEBAQGAwYEBAQAAAAAAAAAGCSDAAA////////////////AAAAAAAAAP8A/wAAKCgoKCgoKCgoKCgoAAAAAAAAAD8gLygoAAAAAAAAAPgI6CgoKCgoKCgoKC8gPwAAKCgoKCgoKOgI+AAAKCgoKCgoKC8gLygoKCgoKCgoKOgI6Cgo";
 const RAW = Uint8Array.from(atob(FONT_B64), c=>c.charCodeAt(0));
-function glyph(code){ if(code<32||code>126) code=32; const o=(code-32)*12; return RAW.subarray(o,o+12); }
+function glyph(code){ if(code<32||code>135) code=32; const o=(code-32)*12; return RAW.subarray(o,o+12); }
 
-// ---- screen model ----
-const COLS=80, ROWS=32, CW=8, CH=12;
+const COLS=80, ROWS=32, CW=8, CH=12, BLOCK=219;
+const H=128,V=129,TL=130,TR=131,BL=132,BR=133,ML=134,MR=135;   // box-drawing codes
 const cv=document.getElementById('scr'), ctx=cv.getContext('2d');
 const img=ctx.createImageData(COLS*CW, ROWS*CH);
-const RGB={ w:[255,255,255], k:[0,0,0], b:[0,0,255], r:[255,0,0] };
-// cells[r][c] = {ch, f, b}
+const RGB={ w:[255,255,255], k:[0,0,0], b:[0,0,255], r:[255,0,0], y:[255,255,0] };
 const cells=[];
 for(let r=0;r<ROWS;r++){ const row=[]; for(let c=0;c<COLS;c++) row.push({ch:32,f:'k',b:'w'}); cells.push(row); }
 
-function px(x,y,rgb){ const i=(y*COLS*CW+x)*4; const d=img.data; d[i]=rgb[0]; d[i+1]=rgb[1]; d[i+2]=rgb[2]; d[i+3]=255; }
-function cellRect(c,r,rgb){ const X=c*CW, Y=r*CH; for(let y=0;y<CH;y++) for(let x=0;x<CW;x++) px(X+x,Y+y,rgb); }
-function cellGlyph(c,r,code,rgb){ const g=glyph(code), X=c*CW, Y=r*CH; for(let y=0;y<CH;y++){ const bits=g[y]; for(let x=0;x<CW;x++) if(bits&(1<<(7-x))) px(X+x,Y+y,rgb); } }
+function px(x,y,rgb){ const i=(y*COLS*CW+x)*4, d=img.data; d[i]=rgb[0]; d[i+1]=rgb[1]; d[i+2]=rgb[2]; d[i+3]=255; }
+function cellRect(c,r,rgb){ const X=c*CW,Y=r*CH; for(let y=0;y<CH;y++) for(let x=0;x<CW;x++) px(X+x,Y+y,rgb); }
+function cellGlyph(c,r,code,rgb){ const g=glyph(code),X=c*CW,Y=r*CH; for(let y=0;y<CH;y++){ const bits=g[y]; for(let x=0;x<CW;x++) if(bits&(1<<(7-x))) px(X+x,Y+y,rgb); } }
 
-let cursorOn=false, cursorAt=null; // {c,r} when accepting input
+let cursorOn=false, cursorAt=null;
 function render(){
-  const d=img.data; for(let i=0;i<d.length;i+=4){ d[i]=255; d[i+1]=255; d[i+2]=255; d[i+3]=255; }
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     const cell=cells[r][c];
-    if(cell.b!=='w') cellRect(c,r,RGB[cell.b]);
-    if(cell.ch===219) cellRect(c,r,RGB[cell.f]);        // solid block
+    cellRect(c,r,RGB[cell.b]);
+    if(cell.ch===BLOCK) cellRect(c,r,RGB[cell.f]);
     else if(cell.ch!==32) cellGlyph(c,r,cell.ch,RGB[cell.f]);
   }
   if(cursorOn && cursorAt) cellRect(cursorAt.c,cursorAt.r,RGB.k);
   ctx.putImageData(img,0,0);
 }
-function clearAll(bg='w'){ for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){ cells[r][c]={ch:32,f:'k',b:bg}; } }
+function clearAll(bg='w'){ for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) cells[r][c]={ch:32,f:'k',b:bg}; }
 function put(c,r,str,f='k',b='w'){ for(let i=0;i<str.length;i++){ const cc=c+i; if(cc>=0&&cc<COLS&&r>=0&&r<ROWS) cells[r][cc]={ch:str.charCodeAt(i),f,b}; } }
-function putBlocks(c,r,str,f='k'){ for(let i=0;i<str.length;i++){ const cc=c+i; if(cc>=0&&cc<COLS&&r>=0&&r<ROWS) cells[r][cc]={ch:str[i]===' '?32:219,f,b:'w'}; } }
+function putBlocks(c,r,str,f='k'){ for(let i=0;i<str.length;i++){ const cc=c+i; if(cc>=0&&cc<COLS&&r>=0&&r<ROWS) cells[r][cc]={ch:str[i]===' '?32:BLOCK,f,b:'w'}; } }
 function centre(str){ return Math.max(0,(COLS-str.length)>>1); }
 
-// ---- console (scrolling window rows 1..31 beneath a fixed status bar) ----
-const WTOP=1, WBOT=31;
-let cx=0, cy=WTOP;
+// ---- layout: status bar (row 0) | sidebar (cols 0..SBW-1) | chat (cols SBW..) ----
+const SBW=24, WLEFT=SBW+1, WRIGHT=79, WTOP=1, WBOT=31;
 function statusBar(){ const left=" ArmGPT", right="a 1987 original "; const pad=Math.max(1,COLS-left.length-right.length); put(0,0,(left+" ".repeat(pad)+right).slice(0,COLS),'w','k'); }
-function scroll(){ for(let r=WTOP;r<WBOT;r++) cells[r]=cells[r+1].map(o=>({...o})); cells[WBOT]=[]; for(let c=0;c<COLS;c++) cells[WBOT].push({ch:32,f:'k',b:'w'}); }
-function nl(){ cx=0; cy++; if(cy>WBOT){ cy=WBOT; scroll(); } }
-function emit(str,f='k'){ for(const ch of str){ if(ch==='\n'){ nl(); continue; } if(cx>=COLS) nl(); cells[cy][cx]={ch:ch.charCodeAt(0),f,b:'w'}; cx++; } }
 
-// ---- content ----
+// chat console (scrolls only within the chat columns)
+let cx=WLEFT, cy=WTOP;
+function scroll(){ for(let r=WTOP;r<WBOT;r++) for(let c=SBW;c<=WRIGHT;c++) cells[r][c]={...cells[r+1][c]}; for(let c=SBW;c<=WRIGHT;c++) cells[WBOT][c]={ch:32,f:'k',b:'w'}; }
+function nl(){ cx=WLEFT; cy++; if(cy>WBOT){ cy=WBOT; scroll(); } }
+function emit(str,f='k'){ for(const ch of str){ if(ch==='\n'){ nl(); continue; } if(cx>WRIGHT) nl(); cells[cy][cx]={ch:ch.charCodeAt(0),f,b:'w'}; cx++; } }
+
+// ---- conversations ----
+let conversations=[], active=0, menuMap={};
+function renderMenu(){
+  menuMap={};
+  for(let r=1;r<ROWS;r++) for(let c=0;c<SBW;c++) cells[r][c]={ch:32,f:'w',b:'b'};
+  cells[1][0]={ch:TL,f:'w',b:'b'}; cells[1][SBW-1]={ch:TR,f:'w',b:'b'};
+  cells[ROWS-1][0]={ch:BL,f:'w',b:'b'}; cells[ROWS-1][SBW-1]={ch:BR,f:'w',b:'b'};
+  for(let c=1;c<SBW-1;c++){ cells[1][c]={ch:H,f:'w',b:'b'}; cells[ROWS-1][c]={ch:H,f:'w',b:'b'}; cells[3][c]={ch:H,f:'w',b:'b'}; }
+  for(let r=2;r<ROWS-1;r++){ cells[r][0]={ch:V,f:'w',b:'b'}; cells[r][SBW-1]={ch:V,f:'w',b:'b'}; }
+  cells[3][0]={ch:ML,f:'w',b:'b'}; cells[3][SBW-1]={ch:MR,f:'w',b:'b'};
+  put(Math.floor((SBW-5)/2),2,"CHATS",'y','b');
+  put(2,5,"+ New chat",'w','b'); menuMap[5]={t:'new'};
+  let row=7;
+  for(let i=0;i<conversations.length && row<=ROWS-2;i++,row++){
+    let name=conversations[i].name; if(name.length>SBW-5) name=name.slice(0,SBW-7)+"..";
+    if(i===active){ for(let c=1;c<SBW-1;c++) cells[row][c]={ch:32,f:'k',b:'w'}; put(2,row,name,'k','w'); }
+    else put(2,row,name,'w','b');
+    menuMap[row]={t:'conv',i};
+  }
+}
+function renderChat(){
+  for(let r=WTOP;r<=WBOT;r++) for(let c=SBW;c<=WRIGHT;c++) cells[r][c]={ch:32,f:'k',b:'w'};
+  cx=WLEFT; cy=WTOP;
+  const conv=conversations[active];
+  if(conv.log.length===0){
+    emit("ArmGPT is online. The serial link is open.\n",'k');
+    emit("Say something and press RETURN.\n\n",'k');
+  } else {
+    for(const e of conv.log){
+      if(e.who==='you'){ emit("you > ",'k'); emit(e.text+"\n",'k'); }
+      else { emit("arm > ",'r'); emit(e.text+"\n\n",'k'); }
+    }
+  }
+  prompt();
+}
+function prompt(){ emit("you > ",'k'); inputBuf=''; state='input'; cursorAt={c:cx,r:cy}; render(); }
+function newChat(){ if(state==='busy'||state==='splash') return; conversations.push({name:'Chat '+(conversations.length+1),log:[],named:false}); active=conversations.length-1; renderMenu(); renderChat(); }
+function switchTo(i){ if(state==='busy'||state==='splash') return; if(i<0||i>=conversations.length||i===active) return; active=i; renderMenu(); renderChat(); }
+
+// ---- wordmark + splash ----
 const ART=[
 "                                   ######     ######   ##########",
 "                                  ########   ########  ##########",
@@ -165,9 +186,8 @@ const CANNED=[
  "The Acorn RISC Machine was born in this very box. Ask me anything.",
  "Slower than a modern GPU by a few million times, but far more stylish."];
 let nReply=0;
-function reply(p){ p=p.trim(); if(!p) return "Say something and I will answer."; if(/^(bye|quit|exit)$/i.test(p)) return "Until next boot. 73!"; return CANNED[(nReply++)%CANNED.length]+"  (you said: "+p.slice(0,60)+")"; }
+function reply(p){ p=p.trim(); if(!p) return "Say something and I will answer."; if(/^(bye|quit|exit)$/i.test(p)) return "Until next boot. 73!"; return CANNED[(nReply++)%CANNED.length]+"  (you said: "+p.slice(0,50)+")"; }
 
-// ---- flow ----
 let state='splash', inputBuf='';
 function drawSplash(){
   clearAll('w'); cursorAt=null;
@@ -180,40 +200,46 @@ function drawSplash(){
   put(0,30,"=".repeat(78),'k');
   render();
 }
-function startChat(){
-  clearAll('w'); statusBar(); cx=0; cy=WTOP;
-  emit("ArmGPT is online. The serial link is open.\n",'k');
-  emit("Say something and press RETURN.  An empty line closes the link.\n\n",'k');
-  prompt();
-}
-function prompt(){ emit("you > ",'k'); inputBuf=''; state='input'; cursorAt={c:cx,r:cy}; render(); }
+function startUI(){ conversations=[{name:'Chat 1',log:[],named:false}]; active=0; clearAll('w'); statusBar(); renderMenu(); renderChat(); }
+
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 async function stream(str){ for(const ch of str){ emit(ch,'k'); render(); await sleep(6); } }
 async function answer(line){
+  const conv=conversations[active];
+  conv.log.push({who:'you',text:line});
+  if(!conv.named){ conv.name=line.slice(0,SBW-3); conv.named=true; renderMenu(); }
   state='busy'; cursorAt=null; emit("\n"); emit("arm > ",'r'); render();
   await sleep(950);
-  await stream(reply(line));
+  const rep=reply(line); await stream(rep); conv.log.push({who:'arm',text:rep});
   emit("\n\n"); prompt();
 }
-function closeLink(){ state='busy'; cursorAt=null; emit("\nLink closed. Bye.\n"); render(); setTimeout(()=>{ state='splash'; drawSplash(); }, 1400); }
 
-// ---- input ----
 function onKey(e){
   const k=e.key;
-  if(state==='splash'){ if(k==='Enter'){ e.preventDefault(); startChat(); } return; }
+  if(state==='splash'){ if(k==='Enter'){ e.preventDefault(); startUI(); } return; }
   if(state!=='input') return;
-  if(k==='Enter'){ e.preventDefault(); const line=inputBuf; cursorAt=null; if(line.trim()===''){ closeLink(); } else { answer(line); } return; }
+  if((e.ctrlKey||e.metaKey) && (k==='n'||k==='N')){ e.preventDefault(); newChat(); return; }
+  if(e.altKey && k==='ArrowUp'){ e.preventDefault(); switchTo(active-1); return; }
+  if(e.altKey && k==='ArrowDown'){ e.preventDefault(); switchTo(active+1); return; }
+  if(k==='Enter'){ e.preventDefault(); const line=inputBuf; cursorAt=null; if(line.trim()==='') prompt(); else answer(line); return; }
   if(k==='Backspace'){ e.preventDefault(); if(inputBuf.length>0){ inputBuf=inputBuf.slice(0,-1); cx--; cells[cy][cx]={ch:32,f:'k',b:'w'}; cursorAt={c:cx,r:cy}; render(); } return; }
-  if(k.length===1 && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); if(inputBuf.length<70){ inputBuf+=k; emit(k,'k'); cursorAt={c:cx,r:cy}; render(); } }
+  if(k.length===1 && !e.metaKey && !e.ctrlKey && !e.altKey){ e.preventDefault(); if(inputBuf.length<48){ inputBuf+=k; emit(k,'k'); cursorAt={c:cx,r:cy}; render(); } }
 }
 window.addEventListener('keydown', onKey);
-cv.addEventListener('click', ()=>cv.focus());
+cv.addEventListener('click', (e)=>{
+  cv.focus();
+  if(state==='splash'||state==='busy') return;
+  const rect=cv.getBoundingClientRect();
+  const col=Math.floor((e.clientX-rect.left)/rect.width*COLS);
+  const row=Math.floor((e.clientY-rect.top)/rect.height*ROWS);
+  if(col>=SBW) return;
+  const m=menuMap[row];
+  if(!m) return;
+  if(m.t==='new') newChat(); else if(m.t==='conv') switchTo(m.i);
+});
 
-// blink
-let blink=null;
 const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-if(!reduce){ blink=setInterval(()=>{ if(cursorAt){ cursorOn=!cursorOn; render(); } }, 460); }
-else { cursorOn=true; }
+if(!reduce){ setInterval(()=>{ if(cursorAt){ cursorOn=!cursorOn; render(); } }, 460); } else { cursorOn=true; }
 
 drawSplash();
 cv.focus();
