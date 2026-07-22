@@ -1,0 +1,113 @@
+   10 REM ACORN - ArmGPT serial chat client for RISC OS (RS-423)
+   20 REM ----------------------------------------------------------
+   30 REM Type a prompt at ">" and press RETURN. ACORN sends it over
+   40 REM the serial port and prints the reply as it streams back.
+   50 REM Press RETURN on an empty line (or ESCAPE) to quit.
+   60 REM
+   70 REM Improvements over SERIALRW:
+   80 REM  * Reads the received byte from R1, not R0 (R0 stays = 4,
+   90 REM    so the old code printed CHR$(4) instead of the reply).
+  100 REM  * Returns to the ">" prompt after every reply, using an
+  110 REM    idle-gap timer to detect when the reply has finished.
+  120 REM  * Keyboard stays the input device (old code did OS_Byte 2,2,
+  130 REM    which sent INPUT to the serial port).
+  140 REM  * Re-sends bytes if the output buffer is full (handshaking).
+  150 REM  * Normalises CR / LF / CRLF line endings from any sender.
+  160 REM
+  170 ON ERROR PROCbye
+  180 PROCsetup
+  190 PROCbanner
+  200 REM
+  210 REM ---- Tunables, in centiseconds (100 = 1 second) ----
+  220 waitmax%=3000 :REM how long to wait for a reply to START (30s)
+  230 idlegap%=300  :REM silence that means the reply has ENDED (3s)
+  240 REM
+  250 PRINT "Type a prompt and press RETURN. Empty line quits."
+  260 PRINT
+  270 done%=FALSE
+  280 REPEAT
+  290   INPUT LINE ">" q$
+  300   IF q$="" THEN done%=TRUE ELSE PROCsend(q$):PROCreceive
+  310 UNTIL done%
+  320 PROCbye
+  330 END
+  340 REM
+  350 REM ================= procedures =================
+  360 REM
+  370 DEF PROCsetup
+  380 SYS "OS_Byte",2,0             :REM keyboard is the input stream (rx still buffered)
+  390 VDU 4                         :REM print text at the text cursor
+  400 SYS "OS_SerialOp",0,4+32,0    :REM link/handshake state (your verified settings)
+  410 SYS "OS_SerialOp",1,9         :REM data format (your verified settings)
+  420 SYS "OS_SerialOp",5,7         :REM 9600 baud receive
+  430 SYS "OS_SerialOp",6,7         :REM 9600 baud transmit
+  440 ENDPROC
+  450 REM
+  460 DEF PROCsend(t$)
+  470 LOCAL i%
+  480 FOR i%=1 TO LEN(t$)
+  490   PROCtx(ASC(MID$(t$,i%,1)))
+  500 NEXT
+  510 PROCtx(13):PROCtx(10)         :REM terminate the prompt with CR LF
+  520 ENDPROC
+  530 REM
+  540 DEF PROCtx(b%)
+  550 LOCAL f%
+  560 REPEAT
+  570   SYS "OS_SerialOp",3,b% TO ;f%
+  580 UNTIL (f% AND 2)=0            :REM carry set (bit 1) = buffer full, retry
+  590 ENDPROC
+  600 REM
+  610 DEF PROCreceive
+  620 LOCAL byte%,flags%,start%,last%,got%
+  630 lastnl%=0:got%=FALSE
+  640 start%=TIME
+  650 REM -- wait for the reply to start --
+  660 REPEAT
+  670   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
+  680   IF (flags% AND 2)=0 THEN PROCshow(byte%):got%=TRUE
+  690 UNTIL got% OR (TIME-start%>waitmax%)
+  700 IF NOT got% THEN PRINT "(no response)":ENDPROC
+  710 REM -- stream until the link falls idle --
+  720 last%=TIME
+  730 REPEAT
+  740   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
+  750   IF (flags% AND 2)=0 THEN PROCshow(byte%):last%=TIME
+  760 UNTIL (TIME-last%>idlegap%)
+  770 IF lastnl%=0 THEN PRINT       :REM tidy: newline if reply did not end with one
+  780 ENDPROC
+  790 REM
+  800 REM Print one received byte, collapsing CR/LF/CRLF to one newline
+  810 DEF PROCshow(b%)
+  820 IF b%=13 OR b%=10 THEN PROCnewline(b%):ENDPROC
+  830 IF b%<32 AND b%<>9 THEN ENDPROC :REM drop stray control codes (keep TAB)
+  840 VDU b%:lastnl%=0
+  850 ENDPROC
+  860 REM
+  870 DEF PROCnewline(b%)
+  880 IF lastnl%<>0 AND b%<>lastnl% THEN lastnl%=0:ENDPROC :REM 2nd half of a CRLF/LFCR pair
+  890 PRINT:lastnl%=b%
+  900 ENDPROC
+  910 REM
+  920 DEF PROCbye
+  930 SYS "OS_Byte",2,0
+  940 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
+  950 PRINT'"Bye."
+  960 END
+  970 ENDPROC
+  980 REM
+  990 DEF PROCbanner
+ 1000 CLS
+ 1010 PRINT "  /$$$$$$                           /$$$$$$  /$$$$$$$  /$$$$$$$$"
+ 1020 PRINT " /$$__  $$                         /$$__  $$| $$__  $$|__  $$__/"
+ 1030 PRINT "| $$  \ $$  /$$$$$$  /$$$$$$/$$$$ | $$  \__/| $$  \ $$   | $$   "
+ 1040 PRINT "| $$$$$$$$ /$$__  $$| $$_  $$_  $$| $$ /$$$$| $$$$$$$/   | $$   "
+ 1050 PRINT "| $$__  $$| $$  \__/| $$ \ $$ \ $$| $$|_  $$| $$____/    | $$   "
+ 1060 PRINT "| $$  | $$| $$      | $$ | $$ | $$| $$  \ $$| $$         | $$   "
+ 1070 PRINT "| $$  | $$| $$      | $$ | $$ | $$|  $$$$$$/| $$         | $$   "
+ 1080 PRINT "|__/  |__/|__/      |__/ |__/ |__/ \______/ |__/         |__/   "
+ 1090 PRINT
+ 1100 PRINT "Press any key to continue..."
+ 1110 dummy%=GET
+ 1120 CLS
+ 1130 ENDPROC

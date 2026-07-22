@@ -8,6 +8,15 @@ Both Acorn Archimedes 310 and 420/I models use RS-423 serial ports (not RS-232).
 
 ## BBC BASIC Programs (420/I Version)
 
+### ACORN - ArmGPT Serial Chat Client (recommended)
+Interactive chat client: type a prompt, ACORN sends it over the serial port and streams the reply back.
+- Type a prompt at `>` and press RETURN; empty line (or ESCAPE) quits
+- Reads the received byte correctly from R1 and tests the carry flag for data-ready
+- Returns to the prompt after each reply using idle-gap detection (tunable `waitmax%` / `idlegap%`)
+- Re-sends bytes when the output buffer is full, so nothing is dropped under RTS/CTS handshaking
+- Normalises CR / LF / CRLF line endings from any sender
+- Supersedes `SERIALRW` for chat use; keep `SERIALRW` around only for its simpler send-wait-receive flow
+
 ### MINRX - Minimal Receiver
 Simple diagnostic program that displays received bytes in hexadecimal.
 - Shows each byte as `~XX` where XX is the hex value
@@ -52,6 +61,7 @@ Tests OS_SerialOp,4 with -1 parameter to examine status flags.
 1. Format diskette on Archimedes using DOS 720k format
 2. Copy files to diskette on PC:
 ```powershell
+copy ACORN A:\ACORN
 copy MINRX A:\MINRX
 copy SERIALRW A:\SERIALRW
 copy BAUDSCAN A:\BAUDSCAN
@@ -60,6 +70,7 @@ copy FLAGTEST A:\FLAGTEST
 ```
 3. On Archimedes, set BASIC filetype:
 ```
+*SETTYPE ACORN &FFB
 *SETTYPE MINRX &FFB
 *SETTYPE SERIALRW &FFB
 *SETTYPE BAUDSCAN &FFB
@@ -76,11 +87,15 @@ If files appear as text files on the Archimedes, you can convert them to BASIC p
 ```
 BASIC
 NEW
-*EXEC MINRX
-SAVE "MINRX"
+*EXEC ACORN
+SAVE "ACORN"
 ```
 3. Repeat for each program:
 ```
+NEW
+*EXEC MINRX
+SAVE "MINRX"
+
 NEW
 *EXEC SERIALRW
 SAVE "SERIALRW"
