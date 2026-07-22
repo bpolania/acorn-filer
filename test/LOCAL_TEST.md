@@ -33,7 +33,7 @@ emulator entirely:
 ```bash
 cd acorn-filer/test
 python3 acorn_sim.py            # mock replies; --delay 3 fakes think-time
-python3 acorn_sim.py --server   # drive the real arm_gpt_server via a pty
+python3 acorn_sim.py --server   # drive the real ArmGPT server via a pty
 ```
 
 This reproduces ACORN's screens in your terminal — the full-screen splash, the
@@ -43,15 +43,41 @@ serial. Press RETURN at the splash, type a message, empty line quits. It mirrors
 ACORN's layout and colours but is a design/flow stand-in, not the RISC OS
 renderer — for the real pixels, use the emulator path below.
 
+### Real replies via the Codex CLI (no Ollama)
+
+The `ArmGPT` repo's **`main`** branch has `serial_codex_interface.py`, which
+answers each message by shelling out to `codex exec` (the ChatGPT/Codex CLI).
+End-to-end flow, verified on this machine:
+
+1. **Terminal A** — start the sim; it prints a pty device path, then waits:
+   ```bash
+   cd acorn-filer/test
+   python3 acorn_sim.py --server
+   #  -> server port: /dev/ttysNNN
+   ```
+2. **Terminal B** — point the server at that pty (needs `codex` installed and
+   signed in):
+   ```bash
+   cd ~/Documents/GitHub/ArmGPT      # on the main branch
+   python3 serial_codex_interface.py --port /dev/ttysNNN
+   ```
+3. Back in **Terminal A**, press RETURN → RETURN, then chat. Codex takes
+   ~20–60s per reply (it sends nothing until finished), so the sim waits up to
+   120s for the first byte.
+
+> Note: `serial_codex_interface.py` was written for a newer Codex; on
+> `codex-cli 0.144.6` the `--ask-for-approval never` and `--ephemeral` flags are
+> invalid. The working invocation is
+> `codex exec --sandbox read-only --skip-git-repo-check --cd <dir>
+> --output-last-message <file> --color never -`.
+
 ---
 
-Two ways to supply replies:
+Two ways `acorn_sim.py` supplies replies:
 
-* **`--mock`** — canned/echoed replies, no Ollama, no ArmGPT server. This is the
-  fast path for iterating on the UI: you see a prompt leave and a reply stream
-  back, and ACORN returns to `you >`.
-* **`--server`** — bridges to the real `arm_gpt_server.py` (macOS branch of the
-  `ArmGPT` repo) for genuine qwen2.5 replies. Needs Ollama running.
+* **`--mock`** — canned replies, no server. Fast path for iterating on the UI.
+* **`--server`** — bridges to the real ArmGPT server (`serial_codex_interface.py`
+  → `codex`, or `arm_gpt_server.py` → Ollama) via a pty for genuine replies.
 
 > **What is verified:** the host-side `serial_bridge.py` (telnet handling, mock
 > replies, and the pty relay) was tested on this machine. The emulator/RISC OS

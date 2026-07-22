@@ -37,7 +37,7 @@
   370 VDU 23,229,&24,&24,&E4,&04,&04,&FC,0,0   :REM bottom-right
   380 VDU 23,230,&24,&24,&27,&24,&24,&27,&24,&24 :REM left tee
   390 VDU 23,231,&24,&24,&E4,&24,&24,&E4,&24,&24 :REM right tee
-  400 waitmax%=3000:idlegap%=300        :REM reply start / idle timeouts (cs)
+  400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, for Codex) / idle (3s), cs
   410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
   420 MAXC%=6:MAXL%=60
   430 DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)

@@ -149,15 +149,16 @@ class Server:
         self.path = os.ttyname(slave)
 
     def banner(self):
-        return ("server port: %s\n  -> in the ArmGPT repo:  "
-                "python3 arm_gpt_server.py --port %s" % (self.path, self.path))
+        return ("server port: %s\n  -> in the ArmGPT repo (on main):  "
+                "python3 serial_codex_interface.py --port %s" % (self.path, self.path))
 
     def ask(self, prompt):
         os.write(self.master, (prompt + "\r\n").encode("latin-1"))
         buf = bytearray()
-        # read until the reply's trailing newline, then a short idle gap
+        # Codex sends nothing until it's finished, and can take 20-60s; wait
+        # generously for the first byte, then a short idle gap once it arrives.
         while True:
-            r, _, _ = select.select([self.master], [], [], 30 if not buf else 3)
+            r, _, _ = select.select([self.master], [], [], 120 if not buf else 3)
             if not r:
                 break
             try:
