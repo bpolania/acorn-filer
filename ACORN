@@ -96,18 +96,43 @@
   960 END
   970 ENDPROC
   980 REM
-  990 DEF PROCbanner
- 1000 CLS
- 1010 PRINT "  /$$$$$$                           /$$$$$$  /$$$$$$$  /$$$$$$$$"
- 1020 PRINT " /$$__  $$                         /$$__  $$| $$__  $$|__  $$__/"
- 1030 PRINT "| $$  \ $$  /$$$$$$  /$$$$$$/$$$$ | $$  \__/| $$  \ $$   | $$   "
- 1040 PRINT "| $$$$$$$$ /$$__  $$| $$_  $$_  $$| $$ /$$$$| $$$$$$$/   | $$   "
- 1050 PRINT "| $$__  $$| $$  \__/| $$ \ $$ \ $$| $$|_  $$| $$____/    | $$   "
- 1060 PRINT "| $$  | $$| $$      | $$ | $$ | $$| $$  \ $$| $$         | $$   "
- 1070 PRINT "| $$  | $$| $$      | $$ | $$ | $$|  $$$$$$/| $$         | $$   "
- 1080 PRINT "|__/  |__/|__/      |__/ |__/ |__/ \______/ |__/         |__/   "
- 1090 PRINT
- 1100 PRINT "Press any key to continue..."
- 1110 dummy%=GET
- 1120 CLS
- 1130 ENDPROC
+  990 REM Full-screen splash: centres the wordmark, waits for RETURN
+ 1000 DEF PROCbanner
+ 1010 LOCAL cols%,rows%,i%,x%,y%,l$,artw%,arth%
+ 1020 artw%=44:arth%=6
+ 1030 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
+ 1040 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
+ 1050 IF cols%<artw% THEN cols%=artw%
+ 1060 CLS
+ 1070 x%=(cols%-artw%) DIV 2:IF x%<0 THEN x%=0
+ 1080 y%=(rows%-arth%) DIV 2-2:IF y%<3 THEN y%=3
+ 1090 COLOUR 6                     :REM cyan, nearest to the Arm teal
+ 1100 PRINT TAB(0,1);STRING$(cols%-1,"=")
+ 1110 PRINT TAB(0,rows%-2);STRING$(cols%-1,"=")
+ 1120 RESTORE 3000
+ 1130 FOR i%=0 TO arth%-1
+ 1140   READ l$
+ 1150   PRINT TAB(x%,y%+i%);l$
+ 1160 NEXT
+ 1170 COLOUR 7
+ 1180 PROCcentre(y%+arth%+1,cols%,"Serial Chat Client for Acorn Archimedes")
+ 1190 COLOUR 6
+ 1200 PROCcentre(y%+arth%+2,cols%,"RS-423  .  9600 8N1  .  RISC OS BASIC")
+ 1210 COLOUR 7
+ 1220 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
+ 1230 REPEAT UNTIL GET=13           :REM wait for RETURN only
+ 1240 COLOUR 7:CLS
+ 1250 ENDPROC
+ 1260 REM
+ 1270 DEF PROCcentre(row%,cols%,t$)
+ 1280 PRINT TAB((cols%-LEN(t$)) DIV 2,row%);t$
+ 1290 ENDPROC
+ 1300 REM
+ 1310 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded ---
+ 1320 REM --- style (figlet "puffy") fused with a capitalised GPT ---
+ 3000 DATA "                         ___    ___   _____"
+ 3010 DATA "                        (  _`\ (  _`\(_   _)"
+ 3020 DATA "   _ _  _ __   ___ ___  | ( (_)| |_) ) | |"
+ 3030 DATA " /'_` )( '__)/' _ ` _ `\| |___ | ,__/' | |"
+ 3040 DATA "( (_| || |   | ( ) ( ) || (_, )| |     | |"
+ 3050 DATA "`\__,_)(_)   (_) (_) (_)(____/'(_)     (_)"
