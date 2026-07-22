@@ -320,7 +320,7 @@ class App:
         self.render()
         # --- DOS-style twinkle on the 'a', while waiting for RETURN ---
         base = [row[:] for row in self.cells]
-        gx, gy = ax + 7, ay + 6           # a bright highlight on the 'a'
+        gx, gy = ax + 63, ay              # glint at the top-right of the "T"
         prev, t = [], 0
         while True:
             cur = []
