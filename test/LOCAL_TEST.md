@@ -16,6 +16,26 @@ already tested on hardware, so here it's just a means to feed replies back.
                                              └──────────────────────────────┘
 ```
 
+## Quick path — no emulator (`acorn_sim.py`)
+
+If you just want to see ACORN's flow and look-and-feel immediately, skip the
+emulator entirely:
+
+```bash
+cd acorn-filer/test
+python3 acorn_sim.py            # mock replies; --delay 3 fakes think-time
+python3 acorn_sim.py --server   # drive the real arm_gpt_server via a pty
+```
+
+This reproduces ACORN's screens in your terminal — the full-screen splash, the
+black-on-white status bar with the conversation scrolling below it, and the
+coloured `you >` / `arm >` prompts with the reply streamed back as if over
+serial. Press RETURN at the splash, type a message, empty line quits. It mirrors
+ACORN's layout and colours but is a design/flow stand-in, not the RISC OS
+renderer — for the real pixels, use the emulator path below.
+
+---
+
 Two ways to supply replies:
 
 * **`--mock`** — canned/echoed replies, no Ollama, no ArmGPT server. This is the
