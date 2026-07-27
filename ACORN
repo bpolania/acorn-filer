@@ -23,8 +23,8 @@
   230 MODE 12                          :REM 80x32, 16 colours
   240 SYS "OS_Byte",2,0               :REM keyboard is the input stream
   250 VDU 4                            :REM print text at the text cursor
-  260 SYS "OS_SerialOp",0,4+32,0       :REM link/handshake state
-  270 SYS "OS_SerialOp",1,9            :REM data format
+  260 SYS "OS_SerialOp",0,6,0          :REM link/handshake state (matches MINRX)
+  270 SYS "OS_SerialOp",1,0            :REM data format (matches MINRX)
   280 SYS "OS_SerialOp",5,7            :REM 9600 baud receive
   290 SYS "OS_SerialOp",6,7            :REM 9600 baud transmit
  300 REM -- custom characters: 224-231 double-line box, 232 solid block --
@@ -40,7 +40,7 @@
  400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, for Codex) / idle (3s), cs
  410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
   420 MAXC%=6:MAXL%=60
-  430 DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
+  430 mask%=&04:DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
   440 ENDPROC
   450 REM
   460 DEF PROCinit
@@ -191,19 +191,19 @@
  1910 REM
  1920 REM ---- receive: stream the reply live AND store it wrapped ----
  1930 DEF PROCreceive
- 1940 LOCAL byte%,flags%,start%,last%,got%
+ 1940 LOCAL byte%,s%,start%,last%,got%
  1950 cur$="arm > ":knd%=1:lastnl%=0
  1960 COLOUR 1:PRINT "arm > ";:COLOUR 0
  1970 start%=TIME:got%=FALSE
  1980 REPEAT
- 1990   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
- 2000   IF (flags% AND 2)=0 THEN PROCrx(byte%):got%=TRUE
+ 1990   SYS "OS_SerialOp",4 TO s%
+ 2000   IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO byte%:PROCrx(byte%):got%=TRUE
  2010 UNTIL got% OR (TIME-start%>waitmax%)
  2020 IF NOT got% THEN PRINT "(no reply)":PROCstore(active%,"arm > (no reply)",1):ENDPROC
  2030 last%=TIME
  2040 REPEAT
- 2050   SYS "OS_SerialOp",4,-1 TO ,byte%;flags%
- 2060   IF (flags% AND 2)=0 THEN PROCrx(byte%):last%=TIME
+ 2050   SYS "OS_SerialOp",4 TO s%
+ 2060   IF (s% AND mask%) THEN SYS "OS_SerialOp",2 TO byte%:PROCrx(byte%):last%=TIME
  2070 UNTIL TIME-last%>idlegap%
  2080 IF cur$<>"" THEN PROCstore(active%,cur$,knd%):PRINT
  2090 ENDPROC
