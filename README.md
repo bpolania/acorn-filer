@@ -10,7 +10,7 @@ Both Acorn Archimedes 310 and 420/I models use RS-423 serial ports (not RS-232).
 
 ### ACORN - ArmGPT Serial Chat Client (recommended)
 Interactive chat client: type a prompt, ACORN sends it over the serial port and streams the reply back.
-- Opens with a full-screen splash (auto-centred to the current screen mode) showing the "armGPT" wordmark — lowercase "arm" in Arm's rounded logo style, rendered as solid blocks (the `#` character is redefined to a solid block); press RETURN to continue
+- Opens with a full-screen splash (auto-centred to the current screen mode) showing the "armGPT" wordmark — lowercase "arm" in Arm's rounded logo style, rendered with a private solid-block character so printable ASCII stays unchanged; press RETURN to continue
 - Authentic RISC OS look (MODE 12): white background, black text, with an inverted black status bar pinned across the top and the conversation scrolling below it; a red `arm >` label marks the machine's replies
 - DOS-style conversation menu down the left (blue bordered panel, `CHATS` title, white selection bar): `TAB` switches conversation, `Ctrl-N` starts a new one, and each conversation keeps its own local scrollback. The border is drawn with custom double-line box characters defined via `VDU 23`. (The AI itself is stateless per message, so conversations are a local grouping on the Acorn side.)
 - Type at the `you >` prompt and press RETURN; `ESCAPE` quits
@@ -19,6 +19,10 @@ Interactive chat client: type a prompt, ACORN sends it over the serial port and 
 - Re-sends bytes when the output buffer is full, so nothing is dropped under RTS/CTS handshaking
 - Normalises CR / LF / CRLF line endings from any sender
 - Supersedes `SERIALRW` for chat use; keep `SERIALRW` around only for its simpler send-wait-receive flow
+
+For the real Archimedes display, run `ACORN` from the full-screen command line
+after exiting the RISC OS desktop. Desktop Task windows are not raw MODE 12
+screens and will not render the fixed 80x32 VDU layout correctly.
 
 ### MINRX - Minimal Receiver
 Simple diagnostic program that displays received bytes in hexadecimal.

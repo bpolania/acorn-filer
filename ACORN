@@ -27,8 +27,8 @@
   270 SYS "OS_SerialOp",1,9            :REM data format
   280 SYS "OS_SerialOp",5,7            :REM 9600 baud receive
   290 SYS "OS_SerialOp",6,7            :REM 9600 baud transmit
-  300 REM -- custom characters: "#" solid block, 224-231 double-line box --
-  310 VDU 23,35,255,255,255,255,255,255,255,255
+ 300 REM -- custom characters: 224-231 double-line box, 232 solid block --
+ 310 BLK%=232:VDU 23,BLK%,255,255,255,255,255,255,255,255
   320 VDU 23,224,0,0,255,0,0,255,0,0          :REM horizontal
   330 VDU 23,225,&24,&24,&24,&24,&24,&24,&24,&24 :REM vertical
   340 VDU 23,226,0,0,&3F,&20,&20,&27,&24,&24   :REM top-left
@@ -37,8 +37,8 @@
   370 VDU 23,229,&24,&24,&E4,&04,&04,&FC,0,0   :REM bottom-right
   380 VDU 23,230,&24,&24,&27,&24,&24,&27,&24,&24 :REM left tee
   390 VDU 23,231,&24,&24,&E4,&24,&24,&E4,&24,&24 :REM right tee
-  400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, for Codex) / idle (3s), cs
-  410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
+ 400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, for Codex) / idle (3s), cs
+ 410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
   420 MAXC%=6:MAXL%=60
   430 DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
   440 ENDPROC
@@ -49,15 +49,16 @@
   490 ENDPROC
   500 REM
   510 REM ---- full redraw: status bar, sidebar menu, chat window ----
-  520 DEF PROCrefresh
-  530 VDU 26                            :REM restore the full text window
-  540 PROCstatus
-  550 PROCmenu
-  560 VDU 28,WL%,WB%,WR%,WT%            :REM confine text to the chat column
-  570 COLOUR 128+7:COLOUR 0:CLS         :REM white chat area, black text
-  580 IF lc%(active%)=0 THEN PROCintro ELSE PROCshow
-  590 PROCprompt
-  600 ENDPROC
+ 520 DEF PROCrefresh
+ 530 VDU 26                            :REM restore the full text window
+ 540 COLOUR 128+7:COLOUR 0:CLS         :REM clear stale splash/window contents
+ 550 PROCstatus
+ 560 PROCmenu
+ 570 VDU 28,WL%,WB%,WR%,WT%            :REM confine text to the chat column
+ 580 COLOUR 128+7:COLOUR 0:CLS         :REM white chat area, black text
+ 590 IF lc%(active%)=0 THEN PROCintro ELSE PROCshow
+ 600 PROCprompt
+ 605 ENDPROC
   610 REM
   620 DEF PROCstatus
   630 LOCAL bar$,r$,pad%
@@ -247,7 +248,7 @@
  2470 PRINT TAB(0,1);STRING$(cols%-1,"=")
  2480 PRINT TAB(0,rows%-2);STRING$(cols%-1,"=")
  2490 RESTORE 3000
- 2500 FOR i%=0 TO arth%-1:READ l$:PRINT TAB(x%,y%+i%);l$:NEXT
+ 2500 FOR i%=0 TO arth%-1:READ l$:PROCartline(x%,y%+i%,l$):NEXT
  2510 PROCcentre(y%+arth%+1,cols%,"ChatGPT on a 1987 Acorn Archimedes")
  2520 PROCcentre(y%+arth%+2,cols%,"the machine that named ARM  .  now it talks back")
  2530 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
@@ -256,11 +257,17 @@
  2560 ENDPROC
  2570 REM
  2580 DEF PROCcentre(row%,cols%,t$)
- 2590 PRINT TAB((cols%-LEN(t$)) DIV 2,row%);t$
- 2600 ENDPROC
- 2610 REM
- 2620 REM --- "armGPT" wordmark: lowercase "arm" in Arm's rounded logo ---
- 2630 REM --- style; "#" is redefined to a solid block (line 310) ---
+ 2590 LOCAL x%:x%=(cols%-LEN(t$)) DIV 2:IF x%<0 THEN x%=0
+ 2600 PRINT TAB(x%,row%);t$
+ 2610 ENDPROC
+ 2620 REM
+ 2630 DEF PROCartline(x%,row%,t$)
+ 2640 LOCAL j%
+ 2650 FOR j%=1 TO LEN(t$):IF MID$(t$,j%,1)="#" THEN PRINT TAB(x%+j%-1,row%);CHR$(BLK%);
+ 2660 NEXT
+ 2670 ENDPROC
+ 2680 REM
+ 2690 REM --- "armGPT" wordmark: "#" in DATA is drawn with block char 232 ---
  3000 DATA "                                   ######     ######   ##########"
  3010 DATA "                                  ########   ########  ##########"
  3020 DATA "                                 ###    ###  ###   ###     ##"
