@@ -196,13 +196,13 @@
  1960 COLOUR 1:PRINT "arm > ";:COLOUR 0
  1970 start%=TIME:got%=FALSE
  1980 REPEAT
- 1990   SYS "OS_SerialOp",4 TO byte%,;flags%
+ 1990   SYS "OS_SerialOp",4 TO ,byte%;flags%
  2000   IF (flags% AND mask%)=0 THEN PROCrx(byte%):got%=TRUE
  2010 UNTIL got% OR (TIME-start%>waitmax%)
  2020 IF NOT got% THEN PRINT "(no reply)":PROCstore(active%,"arm > (no reply)",1):ENDPROC
  2030 last%=TIME
  2040 REPEAT
- 2050   SYS "OS_SerialOp",4 TO byte%,;flags%
+ 2050   SYS "OS_SerialOp",4 TO ,byte%;flags%
  2060   IF (flags% AND mask%)=0 THEN PROCrx(byte%):last%=TIME
  2070 UNTIL TIME-last%>idlegap%
  2080 IF cur$<>"" THEN PROCstore(active%,cur$,knd%):PRINT
