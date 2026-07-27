@@ -21,7 +21,7 @@
   210 DEF PROCsetup
   220 SYS "OS_Byte",135 TO ,,oldmode% :REM remember the mode we started in
   230 MODE 12                          :REM 80x32, 16 colours
-  240 SYS "OS_Byte",2,0               :REM keyboard is the input stream
+  240 SYS "OS_Byte",2,2               :REM matches SERIALRW input stream setup
   250 VDU 4                            :REM print text at the text cursor
   260 SYS "OS_SerialOp",0,4+32,0       :REM link/handshake state (matches SERIALRW)
   270 SYS "OS_SerialOp",1,0            :REM data format (matches armgpt)
