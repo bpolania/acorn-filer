@@ -24,6 +24,11 @@ For the real Archimedes display, run `ACORN` from the full-screen command line
 after exiting the RISC OS desktop. Desktop Task windows are not raw MODE 12
 screens and will not render the fixed 80x32 VDU layout correctly.
 
+### ACORNUI - UI-only ACORN test
+Full-screen MODE 12 test build with the same splash, sidebar, prompts, wrapping,
+and local chat switching as `ACORN`, but with canned local replies instead of
+serial I/O. Use it in RPCEmu when you only want to inspect the Acorn-side UI.
+
 ### MINRX - Minimal Receiver
 Simple diagnostic program that displays received bytes in hexadecimal.
 - Shows each byte as `~XX` where XX is the hex value

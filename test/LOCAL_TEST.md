@@ -25,6 +25,30 @@ reply streamed back — inside a beige monitor with a subtle CRT glow. Open it i
 any browser, click the screen, press RETURN, and chat (canned replies). This is
 the closest reproduction of the real look-and-feel without hardware.
 
+## Real RISC OS UI-only test — RPCEmu + `ACORNUI`
+
+For a true RISC OS rendering pass without serial, use `ACORNUI`. It is the same
+full-screen MODE 12 layout as `ACORN`, but replies are canned locally.
+
+Copy it into RPCEmu's live HostFS folder:
+
+```bash
+cp ACORNUI <rpcemu>/machines/Default/hostfs/ACORNUI,fff
+```
+
+At the RISC OS `*` prompt, stay out of the desktop and import/run it:
+
+```
+*HostFS
+*BASIC
+NEW
+*EXEC ACORNUI
+SAVE "ACORNUI"
+CHAIN "ACORNUI"
+```
+
+If HostFS has not noticed the file yet, restart RPCEmu and try again.
+
 ## Terminal stand-in — quick, no emulator (`acorn_sim.py`)
 
 If you just want to see ACORN's flow and look-and-feel immediately, skip the
