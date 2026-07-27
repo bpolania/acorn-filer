@@ -24,7 +24,7 @@
   240 SYS "OS_Byte",2,0               :REM keyboard is the input stream
   250 VDU 4                            :REM print text at the text cursor
   260 SYS "OS_SerialOp",0,4+32,0       :REM link/handshake state (matches SERIALRW)
-  270 SYS "OS_SerialOp",1,9            :REM data format (matches SERIALRW)
+  270 SYS "OS_SerialOp",1,0            :REM data format (matches armgpt)
   280 SYS "OS_SerialOp",5,7            :REM 9600 baud receive
   290 SYS "OS_SerialOp",6,7            :REM 9600 baud transmit
  300 REM -- custom characters: 224-231 double-line box, 232 solid block --
