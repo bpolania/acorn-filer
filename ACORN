@@ -185,10 +185,10 @@
  1840 PROCtx(13):PROCtx(10)
  1850 ENDPROC
  1860 REM
- 1870 DEF PROCtx(b%)
- 1880 LOCAL f%
- 1890 REPEAT SYS "OS_SerialOp",3,b% TO ;f% UNTIL (f% AND 2)=0
- 1900 ENDPROC
+1870 DEF PROCtx(b%)
+1880 LOCAL r%,f%
+1890 REPEAT SYS "OS_SerialOp",3,b% TO r%;f% UNTIL (f% AND 2)=0
+1900 ENDPROC
  1910 REM
  1920 REM ---- receive: stream the reply live AND store it wrapped ----
  1930 DEF PROCreceive
