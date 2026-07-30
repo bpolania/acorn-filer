@@ -3,7 +3,7 @@
    30 REM MODE 12 chat client with a DOS-style conversation menu:
    40 REM  - type at "you >" and press RETURN; the reply streams back
    50 REM  - TAB switches conversation, Ctrl-N starts a new one
-   60 REM  - each conversation keeps its own local scrollback
+   60 REM  - Ctrl-L toggles local/codex server mode
    70 REM  - ESCAPE quits (the AI itself has no cross-message memory;
    80 REM    conversations are a local grouping on the Acorn side)
    90 REM
@@ -44,7 +44,7 @@
   440 ENDPROC
   450 REM
   460 DEF PROCinit
-  470 nconv%=1:active%=1:quit%=FALSE
+  470 nconv%=1:active%=1:quit%=FALSE:mode$="codex"
   480 cnm$(1)="Chat 1":lc%(1)=0
   490 ENDPROC
   500 REM
@@ -62,7 +62,7 @@
   610 REM
   620 DEF PROCstatus
   630 LOCAL bar$,r$,pad%
-  640 bar$=" ArmGPT":r$="a 1987 original "
+  640 bar$=" ArmGPT":r$="mode "+mode$+"  ^L switch "
   650 pad%=79-LEN(bar$)-LEN(r$):IF pad%<1 THEN pad%=1
   660 COLOUR 128+0:COLOUR 7
   670 PRINT TAB(0,0);bar$;STRING$(pad%," ");r$;
@@ -83,10 +83,12 @@
   820   IF i%=active% THEN PROCitemon(i%) ELSE PROCitemoff(i%)
   830 NEXT
   840 COLOUR 128+4:COLOUR 7
-  850 PRINT TAB(2,WB%-4);"TAB  switch";
-  860 PRINT TAB(2,WB%-3);CHR$(94);"N   new chat";
-  870 PRINT TAB(2,WB%-2);"ESC  quit";
-  880 ENDPROC
+  850 PRINT TAB(2,WB%-5);"mode ";mode$;
+  860 PRINT TAB(2,WB%-4);"TAB  switch";
+  870 PRINT TAB(2,WB%-3);CHR$(94);"N   new chat";
+  875 PRINT TAB(2,WB%-2);CHR$(94);"L   mode";
+  880 PRINT TAB(2,WB%-1);"ESC  quit";
+  885 ENDPROC
   890 REM
   900 DEF PROCitemon(i%)
   910 COLOUR 128+7:COLOUR 0
@@ -101,8 +103,9 @@
  1000 REM
  1010 DEF PROCintro
  1020 COLOUR 0:PRINT "ArmGPT online. Serial link open."
- 1030 PRINT
- 1040 ENDPROC
+  1030 PRINT "Commands: /status  /help  /mode local  /mode codex  /quit"
+  1035 PRINT "Ctrl-L switches local/codex mode."
+  1040 ENDPROC
  1050 REM
  1060 REM ---- replay a conversation's stored transcript ----
  1070 DEF PROCshow
@@ -130,54 +133,57 @@
  1290     WHEN 13:PROCenter
  1300     WHEN 8,127:PROCbksp
  1310     WHEN 9:PROCnextconv
- 1320     WHEN 14:PROCnewconv
- 1330     WHEN 27:quit%=TRUE
- 1340     OTHERWISE
- 1350       IF k%>=32 AND k%<127 AND LEN(q$)<48 THEN q$=q$+CHR$(k%):VDU k%
- 1360   ENDCASE
- 1370 UNTIL quit%
- 1380 ENDPROC
- 1390 REM
- 1400 DEF PROCbksp
- 1410 IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
- 1420 ENDPROC
- 1430 REM
- 1440 DEF PROCenter
- 1450 IF q$="" THEN PRINT:PROCprompt:ENDPROC
- 1460 PRINT
- 1470 PROCstore(active%,"you > "+q$,0)
- 1480 PROCsend(q$)
- 1490 PROCreceive
- 1500 PROCstore(active%,"",0)
- 1510 PRINT
- 1520 PROCprompt
- 1530 ENDPROC
- 1540 REM
- 1550 DEF PROCnextconv
- 1560 IF nconv%<=1 THEN ENDPROC
- 1570 active%=active%+1:IF active%>nconv% THEN active%=1
- 1580 PROCrefresh
- 1590 ENDPROC
- 1600 REM
- 1610 DEF PROCnewconv
- 1620 IF nconv%>=MAXC% THEN VDU 7:ENDPROC
- 1630 nconv%=nconv%+1:active%=nconv%
- 1640 cnm$(active%)="Chat "+STR$(active%):lc%(active%)=0
- 1650 PROCrefresh
- 1660 ENDPROC
- 1670 REM
- 1680 REM ---- conversation storage (array of display lines) ----
- 1690 DEF PROCstore(c%,t$,k%)
- 1700 IF lc%(c%)>=MAXL% THEN PROCdrop(c%)
- 1710 ln$(c%,lc%(c%))=t$:lk%(c%,lc%(c%))=k%:lc%(c%)=lc%(c%)+1
- 1720 ENDPROC
- 1730 REM
- 1740 DEF PROCdrop(c%)
- 1750 LOCAL j%
- 1760 FOR j%=0 TO MAXL%-2:ln$(c%,j%)=ln$(c%,j%+1):lk%(c%,j%)=lk%(c%,j%+1):NEXT
- 1770 lc%(c%)=MAXL%-1
- 1780 ENDPROC
- 1790 REM
+  1320     WHEN 12:PROCtogglemode
+  1330     WHEN 14:PROCnewconv
+  1340     WHEN 27:quit%=TRUE
+  1350     OTHERWISE
+  1360       IF k%>=32 AND k%<127 AND LEN(q$)<48 THEN q$=q$+CHR$(k%):VDU k%
+  1370   ENDCASE
+  1380 UNTIL quit%
+  1390 ENDPROC
+  1400 REM
+  1410 DEF PROCbksp
+  1420 IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
+  1430 ENDPROC
+  1440 REM
+  1450 DEF PROCenter
+  1460 IF q$="" THEN PRINT:PROCprompt:ENDPROC
+  1470 PRINT
+  1480 IF q$="/quit" THEN quit%=TRUE:ENDPROC
+  1490 PROCstore(active%,"you > "+q$,0)
+  1500 PROCnotecmd(q$)
+  1510 PROCsend(q$)
+  1520 PROCreceive
+  1530 PROCstore(active%,"",0)
+  1540 PRINT
+  1550 PROCprompt
+  1560 ENDPROC
+  1570 REM
+  1580 DEF PROCnextconv
+  1590 IF nconv%<=1 THEN ENDPROC
+  1600 active%=active%+1:IF active%>nconv% THEN active%=1
+  1610 PROCrefresh
+  1620 ENDPROC
+  1630 REM
+  1640 DEF PROCnewconv
+  1650 IF nconv%>=MAXC% THEN VDU 7:ENDPROC
+  1660 nconv%=nconv%+1:active%=nconv%
+  1670 cnm$(active%)="Chat "+STR$(active%):lc%(active%)=0
+  1680 PROCrefresh
+  1690 ENDPROC
+  1700 REM
+  1710 REM ---- conversation storage (array of display lines) ----
+  1720 DEF PROCstore(c%,t$,k%)
+  1730 IF lc%(c%)>=MAXL% THEN PROCdrop(c%)
+  1740 ln$(c%,lc%(c%))=t$:lk%(c%,lc%(c%))=k%:lc%(c%)=lc%(c%)+1
+  1750 ENDPROC
+  1760 REM
+  1770 DEF PROCdrop(c%)
+  1780 LOCAL j%
+  1790 FOR j%=0 TO MAXL%-2:ln$(c%,j%)=ln$(c%,j%+1):lk%(c%,j%)=lk%(c%,j%+1):NEXT
+  1795 lc%(c%)=MAXL%-1
+  1798 ENDPROC
+  1799 REM
  1800 REM ---- send prompt over serial ----
  1810 DEF PROCsend(t$)
  1820 LOCAL i%
@@ -224,7 +230,24 @@
  2240 DEF PROCbreak
  2250 PROCstore(active%,cur$,knd%):PRINT:cur$="":knd%=0
  2260 ENDPROC
- 2270 REM
+ 2261 DEF PROCtogglemode
+ 2262 LOCAL cmd$
+ 2263 IF q$<>"" THEN VDU 7:ENDPROC
+ 2264 IF mode$="local" THEN mode$="codex":cmd$="/mode codex" ELSE mode$="local":cmd$="/mode local"
+ 2265 PROCtopbar:PRINT
+ 2266 PROCstore(active%,"you > "+cmd$,0)
+ 2267 PROCsend(cmd$)
+ 2268 PROCreceive
+ 2269 PROCstore(active%,"",0):PRINT:PROCprompt
+ 2270 ENDPROC
+ 2271 DEF PROCnotecmd(t$)
+ 2272 IF t$="/mode local" THEN mode$="local":PROCtopbar
+ 2273 IF t$="/mode codex" THEN mode$="codex":PROCtopbar
+ 2274 ENDPROC
+ 2275 DEF PROCtopbar
+ 2276 VDU 26:PROCstatus:VDU 28,WL%,WB%,WR%,WT%
+ 2277 ENDPROC
+ 2278 REM
  2280 DEF PROCbye
  2290 MODE oldmode%                     :REM restore the mode we started in
  2300 SYS "OS_Byte",2,0
