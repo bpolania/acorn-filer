@@ -116,7 +116,7 @@
  1120 ENDPROC
  1130 REM
  1140 DEF PROCline(c%,i%)
- 1150 IF lk%(c%,i%)=1 THEN COLOUR 1:PRINT LEFT$(ln$(c%,i%),6);:COLOUR 0:PRINT MID$(ln$(c%,i%),7) ELSE COLOUR 0:PRINT ln$(c%,i%)
+ 1150 IF lk%(c%,i%)=1 THEN COLOUR 4:PRINT LEFT$(ln$(c%,i%),6);:COLOUR 0:PRINT MID$(ln$(c%,i%),7) ELSE COLOUR 0:PRINT ln$(c%,i%)
  1160 ENDPROC
  1170 REM
  1180 DEF PROCprompt
@@ -201,7 +201,7 @@
  1930 DEF PROCreceive
  1940 LOCAL byte%,flags%,start%,last%,got%
  1950 cur$="arm > ":knd%=1:lastnl%=0
- 1960 COLOUR 1:PRINT "arm > ";:COLOUR 0
+ 1960 COLOUR 4:PRINT "arm > ";:COLOUR 0
  1970 start%=TIME:got%=FALSE
  1980 REPEAT
  1990   SYS "OS_SerialOp",4 TO ,byte%;flags%

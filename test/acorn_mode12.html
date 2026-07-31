@@ -156,7 +156,7 @@ function renderChat(){
   } else {
     for(const e of conv.log){
       if(e.who==='you'){ emit("you > ",'k'); emit(e.text+"\n",'k'); }
-      else { emit("arm > ",'r'); emit(e.text+"\n\n",'k'); }
+      else { emit("arm > ",'b'); emit(e.text+"\n\n",'k'); }
     }
   }
   prompt();
@@ -219,7 +219,7 @@ async function answer(line){
   const conv=conversations[active];
   conv.log.push({who:'you',text:line});
   if(!conv.named){ conv.name=line.slice(0,SBW-3); conv.named=true; renderMenu(); }
-  state='busy'; cursorAt=null; emit("\n"); emit("arm > ",'r'); render();
+  state='busy'; cursorAt=null; emit("\n"); emit("arm > ",'b'); render();
   await sleep(950);
   const rep=reply(line); await stream(rep); conv.log.push({who:'arm',text:rep});
   emit("\n\n"); prompt();

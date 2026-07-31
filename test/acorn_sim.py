@@ -226,7 +226,7 @@ class App:
         prefix = "you > " if who == 1 else "arm > "
         lines = self.wrap(prefix + text, width)
         for i, ln in enumerate(lines):
-            kind = 1 if (who == 2 and i == 0) else 0    # red "arm > " on line 0
+            kind = 1 if (who == 2 and i == 0) else 0    # blue "arm > " on line 0
             conv["lines"].append((ln, kind))
         if who == 1 and not conv["named"]:
             conv["name"] = text[:SBW - 4]
@@ -296,7 +296,7 @@ class App:
         for i, (txt, kind) in enumerate(view):
             r = top + i
             if kind == 1:
-                self.put(left, r, txt[:6], "r", "w")
+                self.put(left, r, txt[:6], "b", "w")
                 self.put(left + 6, r, txt[6:], "k", "w")
             else:
                 self.put(left, r, txt, "k", "w")

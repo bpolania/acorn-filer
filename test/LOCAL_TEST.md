@@ -20,7 +20,7 @@ already tested on hardware, so here it's just a means to feed replies back.
 
 `acorn_mode12.html` renders ACORN the way it looks on a real Acorn Archimedes:
 a true white MODE 12 screen (80x32) drawn pixel-by-pixel in an 8x12 system font,
-with the inverted black status bar, blue `you >` / red `arm >` prompts, and the
+with the inverted black status bar and blue `arm >` reply labels, and the
 reply streamed back — inside a beige monitor with a subtle CRT glow. Open it in
 any browser, click the screen, press RETURN, and chat (canned replies). This is
 the closest reproduction of the real look-and-feel without hardware.

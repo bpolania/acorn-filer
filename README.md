@@ -11,7 +11,7 @@ Both Acorn Archimedes 310 and 420/I models use RS-423 serial ports (not RS-232).
 ### ACORN - ArmGPT Serial Chat Client (recommended)
 Interactive chat client: type a prompt, ACORN sends it over the serial port and streams the reply back.
 - Opens with a full-screen splash (auto-centred to the current screen mode) showing the "armGPT" wordmark — lowercase "arm" in Arm's rounded logo style, rendered with a private solid-block character so printable ASCII stays unchanged; press RETURN to continue
-- Authentic RISC OS look (MODE 12): white background, black text, with an inverted black status bar pinned across the top and the conversation scrolling below it; a red `arm >` label marks the machine's replies
+- Authentic RISC OS look (MODE 12): white background, black text, with an inverted black status bar pinned across the top and the conversation scrolling below it; a blue `arm >` label marks the machine's replies
 - DOS-style conversation menu down the left (blue bordered panel, `CHATS` title, white selection bar): `TAB` switches conversation, `Ctrl-N` starts a new one, and each conversation keeps its own local scrollback. The border is drawn with custom double-line box characters defined via `VDU 23`. (The AI itself is stateless per message, so conversations are a local grouping on the Acorn side.)
 - Type at the `you >` prompt and press RETURN; `ESCAPE` quits, and `/quit` exits locally without sending `/quit` to the server
 - The current server mode is shown in the status bar and sidebar. ACORN starts in visible `local` mode; `Ctrl-L` toggles local/cloud mode by sending `/mode local` or `/mode cloud` as plain text.
