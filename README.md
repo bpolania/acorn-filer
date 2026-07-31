@@ -16,9 +16,9 @@ Interactive chat client: type a prompt, ACORN sends it over the serial port and 
 - Type at the `you >` prompt and press RETURN; `ESCAPE` quits, and `/quit` exits locally without sending `/quit` to the server
 - The current server mode is shown in the status bar and sidebar. `Ctrl-L` toggles local/codex mode by sending `/mode local` or `/mode codex` as plain text.
 - Server commands are passed through exactly as typed, including `/mode local`, `/mode codex`, `/local <prompt>`, `/codex <prompt>`, `/status`, and `/help`.
+- Plain text prompts are sent unchanged and routed by the Python host's current mode.
 - Reads the received byte correctly from R1 and tests the carry flag for data-ready
 - Returns to the prompt after each reply using idle-gap detection (tunable `waitmax%` / `idlegap%`)
-- Re-sends bytes when the output buffer is full, so nothing is dropped under RTS/CTS handshaking
 - Normalises CR / LF / CRLF line endings from any sender
 - Supersedes `SERIALRW` for chat use; keep `SERIALRW` around only for its simpler send-wait-receive flow
 
@@ -84,14 +84,15 @@ copy BAUDSCAN A:\BAUDSCAN
 copy FILERCV A:\FILERCV
 copy FLAGTEST A:\FLAGTEST
 ```
-3. On Archimedes, set BASIC filetype:
+3. On Archimedes, set the filetype for text listings, then import them with
+   `*EXEC` as shown below:
 ```
-*SETTYPE ACORN &FFB
-*SETTYPE MINRX &FFB
-*SETTYPE SERIALRW &FFB
-*SETTYPE BAUDSCAN &FFB
-*SETTYPE FILERCV &FFB
-*SETTYPE FLAGTEST &FFB
+*SETTYPE ACORN &FFF
+*SETTYPE MINRX &FFF
+*SETTYPE SERIALRW &FFF
+*SETTYPE BAUDSCAN &FFF
+*SETTYPE FILERCV &FFF
+*SETTYPE FLAGTEST &FFF
 ```
 
 ### Alternative: Using EXEC Command
@@ -125,9 +126,51 @@ NEW
 SAVE "FILERCV"
 ```
 
-The EXEC command reads a text file and executes each line as if typed at the keyboard. This converts text files containing BASIC programs into proper BASIC files that can be RUN directly.
+The EXEC command reads a text file and executes each line as if typed at the keyboard. This converts text listings containing BASIC programs into proper BASIC files that can be `RUN` or `CHAIN`ed directly. After saving the imported program, RISC OS stores it as a BASIC program.
 
-**Note:** Files must have CR (0x0D) line endings for proper import on Acorn systems. The files in this repository are already formatted with correct CR line endings.
+**Note:** Files must have CR (0x0D) line endings for reliable `*EXEC` import on Acorn systems. Git may check these files out with LF endings on modern systems, so convert to CR-only when preparing floppies or HostFS copies if needed.
+
+Quick ACORN startup from a text listing:
+```
+*SETTYPE ACORN &FFF
+BASIC
+NEW
+*EXEC ACORN
+SAVE "ACORNRUN"
+CHAIN "ACORNRUN"
+```
+
+If a file is already a saved/tokenized BASIC program rather than a text listing,
+set its filetype to `&FFB` and run it directly:
+```
+*SETTYPE ACORNRUN &FFB
+BASIC
+CHAIN "ACORNRUN"
+```
+
+## Hybrid ArmGPT Server Protocol
+
+`ACORN` talks to the host over plain newline-terminated text. It does not use a
+binary protocol or command prefix byte. The Python host server, `acorn_server.py`,
+selects either its local model path or Codex/ChatGPT path.
+
+Supported server commands:
+```
+/mode local
+/mode codex
+/local <prompt>
+/codex <prompt>
+/status
+/help
+```
+
+Typing `Ctrl-L` in `ACORN` toggles the current mode and sends `/mode local` or
+`/mode codex` to the server. Typing `/mode local` or `/mode codex` yourself also
+updates the visible mode in the ACORN UI before the command is sent. Plain text
+prompts are sent unchanged and the host routes them using its current mode.
+
+`/quit` is local to `ACORN`; it exits the BASIC client and is not sent to the
+server.
 
 ## Testing Strategy
 
@@ -147,7 +190,7 @@ python3 serial_tool.py --port /dev/ttyUSB0 --mode send --baud 9600 --rtscts 1 --
 
 **On Archimedes:**
 ```
-*SETTYPE MINRX &FFB
+REM after importing/saving MINRX from its text listing
 RUN "MINRX"
 ```
 
@@ -180,7 +223,7 @@ python3 serial_tool.py --port /dev/ttyUSB0 --mode send --baud 9600 --rtscts 1 --
 
 **On Archimedes:**
 ```
-*SETTYPE SERIALRW &FFB
+REM after importing/saving SERIALRW from its text listing
 RUN "SERIALRW"
 ```
 
@@ -199,7 +242,7 @@ while true; do echo -n "U"; done | python3 serial_tool.py --port /dev/ttyUSB0 --
 
 **On Archimedes:**
 ```
-*SETTYPE BAUDSCAN &FFB
+REM after importing/saving BAUDSCAN from its text listing
 RUN "BAUDSCAN"
 ```
 
@@ -234,8 +277,9 @@ python3 serial_tool.py --port /dev/ttyUSB0 --mode dump --hex
 ### Serial Configuration
 - Default: 9600 baud, 8N1
 - Hardware handshaking: RTS/CTS enabled
-- Status bit for data ready: `&04`
-- Timeout: 6000 centiseconds (1 minute)
+- ACORN uses `SYS "OS_Byte",2,2`, `SYS "OS_SerialOp",0,4+32,0`, `SYS "OS_SerialOp",1,0`, and streams 7 for receive/transmit
+- ACORN receives with `SYS "OS_SerialOp",4 TO ,byte%;flags%` and treats `(flags% AND &02)=0` as byte available
+- Reply-start timeout: `waitmax%` (currently 12000 centiseconds); end-of-reply idle gap: `idlegap%` (currently 300 centiseconds)
 
 ### RISC OS Serial Operations
 - `SYS "OS_SerialOp",0,idx,mode` - Set baud rate

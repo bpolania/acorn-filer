@@ -9,13 +9,13 @@ colour-coded you> / arm> prompts. Multiple conversations, each with its own
 history.
 
 Controls:  type + RETURN to send   TAB or up/down = switch chat
-           Ctrl-N = new chat        ESC = quit
+           Ctrl-N = new chat        Ctrl-L = local/codex mode
+           ESC = quit
 
 Reply sources:
   --mock             canned replies (default), no server.
   --server           relay to the ArmGPT server via a pseudo-terminal;
-                     prints a /dev/ttys### to give to serial_codex_interface.py
-                     (Codex CLI) or arm_gpt_server.py (Ollama).
+                     prints a /dev/ttys### to give to acorn_server.py.
 
 Not pixel-authentic (a terminal can't be a real MODE 12 screen), but the
 wordmark, menu, multi-chat, colours and flow all match. Pure standard library.
@@ -66,11 +66,22 @@ class Mock:
     def __init__(self, delay):
         self.delay = delay
         self.n = 0
+        self.mode = "codex"
 
     def ask(self, prompt):
         if self.delay:
             time.sleep(self.delay)
         p = prompt.strip().lower()
+        if p == "/mode local":
+            self.mode = "local"
+            return "Mode set to local."
+        if p == "/mode codex":
+            self.mode = "codex"
+            return "Mode set to codex."
+        if p == "/status":
+            return "Mode: %s." % self.mode
+        if p == "/help":
+            return "Commands: /mode local, /mode codex, /local, /codex, /status, /help."
         if p in ("bye", "quit", "exit"):
             return "Until next boot. 73!"
         if "year" in p:
@@ -99,7 +110,7 @@ class Server:
         return ("server port: %s\n"
                 "  -> in the ArmGPT repo (main branch), using ITS venv python\n"
                 "     (system python3 lacks pyserial):\n"
-                "       ./venv/bin/python serial_codex_interface.py --port %s"
+                "       ./venv/bin/python acorn_server.py --port %s"
                 % (self.path, self.path))
 
     def ask(self, prompt):
@@ -140,6 +151,7 @@ class App:
         self.text = ""
         self.thinking = False
         self.quit = False
+        self.mode = "codex"
         self.cursor = None
         self.menu_rows = {}   # screen row -> ('new'|index)
 
@@ -222,7 +234,7 @@ class App:
 
     # ---- drawing ----
     def draw_status(self):
-        right = "a 1987 original "
+        right = "mode %s  ^L switch " % self.mode
         bar = (" ArmGPT").ljust(self.cols - len(right)) + right
         self.put(0, 0, bar[:self.cols], "w", "k")
 
@@ -253,9 +265,9 @@ class App:
                 self.put(2, row, name, "w", "b")
             self.menu_rows[row] = i
             row += 1
-        self.put(2, self.rows - 5, "TAB / arrows", "w", "b")
-        self.put(2, self.rows - 4, "  switch chat", "w", "b")
-        self.put(2, self.rows - 3, "^N  new chat", "w", "b")
+        self.put(2, self.rows - 5, "mode %s" % self.mode, "w", "b")
+        self.put(2, self.rows - 4, "TAB switch", "w", "b")
+        self.put(2, self.rows - 3, "^N new  ^L mode", "w", "b")
         self.put(2, self.rows - 2, "ESC quit", "w", "b")
 
     def draw_chat(self):
@@ -267,6 +279,8 @@ class App:
         lines = list(conv["lines"])
         if not lines:
             lines = [("ArmGPT is online. The serial link is open.", 0),
+                     ("Commands: /status /help /mode local /mode codex /quit", 0),
+                     ("Ctrl-L switches local/codex mode.", 0),
                      ("Say something and press RETURN.", 0), ("", 0)]
         if self.thinking:
             lines.append(("arm > thinking (Codex can take up to a minute)...", 1))
@@ -374,13 +388,36 @@ class App:
         if not line:
             self.paint()
             return
+        if line == "/quit":
+            self.quit = True
+            return
         self.add_msg(1, line)
+        self.note_cmd(line)
         self.thinking = True
         self.paint()
         reply = self.backend.ask(line)
         self.thinking = False
         self.add_msg(2, reply or "(no reply)")
         self.paint()
+
+    def toggle_mode(self):
+        if self.text:
+            return
+        cmd = "/mode codex" if self.mode == "local" else "/mode local"
+        self.add_msg(1, cmd)
+        self.note_cmd(cmd)
+        self.thinking = True
+        self.paint()
+        reply = self.backend.ask(cmd)
+        self.thinking = False
+        self.add_msg(2, reply or "(no reply)")
+        self.paint()
+
+    def note_cmd(self, line):
+        if line == "/mode local":
+            self.mode = "local"
+        elif line == "/mode codex":
+            self.mode = "codex"
 
     def type_char(self, ch):
         if len(self.text) < self.cols - SBW - 10:
@@ -423,6 +460,8 @@ class App:
                     self.backspace()
                 elif o == 9:
                     self.switch((self.active + 1) % max(1, len(self.convs)))
+                elif o == 12:
+                    self.toggle_mode()
                 elif o == 14:
                     self.new_conv()
                 elif o == 3:
@@ -441,20 +480,20 @@ class App:
 
 
 def run_codex(armgpt_dir):
-    """Auto-launch the ArmGPT Codex server against our own pty - one command,
+    """Auto-launch the ArmGPT hybrid server against our own pty - one command,
     no second terminal, no pty-path copying."""
     import subprocess
     d = os.path.expanduser(armgpt_dir)
-    if not os.path.isfile(os.path.join(d, "serial_codex_interface.py")):
-        sys.exit("serial_codex_interface.py not found in %s\n"
+    if not os.path.isfile(os.path.join(d, "acorn_server.py")):
+        sys.exit("acorn_server.py not found in %s\n"
                  "Pass --armgpt-dir <path to the ArmGPT repo, on its main branch>." % d)
     py = os.path.join(d, "venv", "bin", "python")
     if not os.path.isfile(py):
         py = "python3"
     backend = Server()
-    log = "/tmp/acorn_codex_server.log"
-    cmd = [py, "serial_codex_interface.py", "--port", backend.path]
-    print("Launching Codex server:\n  %s\n  (cwd %s, log %s)" % (" ".join(cmd), d, log))
+    log = "/tmp/acorn_hybrid_server.log"
+    cmd = [py, "acorn_server.py", "--port", backend.path]
+    print("Launching hybrid ArmGPT server:\n  %s\n  (cwd %s, log %s)" % (" ".join(cmd), d, log))
     proc = subprocess.Popen(cmd, cwd=d, stdout=open(log, "w"),
                             stderr=subprocess.STDOUT)
     for _ in range(20):                       # wait up to ~5s for it to come up
@@ -486,7 +525,7 @@ def main():
     mode.add_argument("--server", action="store_true",
                       help="relay to a server you start yourself, via a pty")
     mode.add_argument("--codex", action="store_true",
-                      help="auto-launch the ArmGPT Codex server (one command, "
+                      help="auto-launch the ArmGPT hybrid server (one command, "
                            "no second terminal)")
     ap.add_argument("--armgpt-dir", default="~/Documents/GitHub/ArmGPT",
                     help="ArmGPT repo location for --codex")

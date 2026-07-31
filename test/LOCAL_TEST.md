@@ -12,7 +12,7 @@ already tested on hardware, so here it's just a means to feed replies back.
   │ DIAL  ── dials ─────────────────────────▶ serial_bridge.py            │
   │  └ CHAIN "ACORN"       │  127.0.0.1:5623 │   ├─ --mock  canned replies │
   │     type at "you >"    │◀──── reply ─────┤   └─ --server ⇄ pty ⇄        │
-  └───────────────────────┘                 │        arm_gpt_server.py ⇄ Ollama
+  └───────────────────────┘                 │        acorn_server.py        │
                                              └──────────────────────────────┘
 ```
 
@@ -39,15 +39,32 @@ python3 acorn_sim.py --server   # drive the real ArmGPT server via a pty
 This reproduces ACORN's full UI in your terminal — the solid `armGPT` splash,
 the black-on-white status bar, the **DOS conversation menu** down the left, and
 colour-coded `you >` / `arm >` prompts. Type and press RETURN to send; **TAB**
-or **up/down** switch conversation, **Ctrl-N** starts a new one, **ESC** quits.
+or **up/down** switch conversation, **Ctrl-N** starts a new one, **Ctrl-L**
+switches local/codex server mode, and **ESC** quits.
 Each conversation keeps its own history. It mirrors ACORN's layout, menu and
 colours, but a terminal can't be a true white MODE 12 screen — for the real
 pixels, use the emulator path below.
 
-### Real replies via the Codex CLI (no Ollama)
+### Real replies via the hybrid ArmGPT server
 
-The `ArmGPT` repo's **`main`** branch has `serial_codex_interface.py`, which
-answers each message by shelling out to `codex exec` (the ChatGPT/Codex CLI).
+The `ArmGPT` repo's host server is `acorn_server.py`. It reads one
+newline-terminated prompt from serial and sends back one newline-terminated
+response. It can route requests to either a local model or Codex/ChatGPT.
+
+ACORN sends plain text only. These commands are preserved exactly:
+
+```
+/mode local
+/mode codex
+/local <prompt>
+/codex <prompt>
+/status
+/help
+```
+
+Plain prompts are sent unchanged and the server routes them using its current
+mode. `Ctrl-L` in ACORN toggles local/codex by sending `/mode local` or
+`/mode codex`. `/quit` exits ACORN locally and is not sent to the server.
 
 **Easiest — one command** (the sim launches the server against its own pty, so
 there's no second terminal and no pty-path copying):
@@ -56,10 +73,11 @@ there's no second terminal and no pty-path copying):
 cd acorn-filer/test
 python3 acorn_sim.py --codex
 #   (assumes the ArmGPT repo at ~/Documents/GitHub/ArmGPT on its main branch;
-#    override with --armgpt-dir <path>. Server log: /tmp/acorn_codex_server.log)
+#    override with --armgpt-dir <path>. Server log: /tmp/acorn_hybrid_server.log)
 ```
 
-Press RETURN past the splash and chat — real Codex answers in ~20–60s.
+Press RETURN past the splash and chat. Use `/status`, `/mode local`,
+`/mode codex`, or `Ctrl-L` to verify server mode switching.
 
 **Manual (two terminals)** — the same thing wired by hand, verified on this
 machine:
@@ -71,29 +89,23 @@ machine:
    #  -> server port: /dev/ttysNNN
    ```
 2. **Terminal B** — point the server at that pty, **using the ArmGPT venv's
-   Python** (system `python3` lacks `pyserial` and will crash on startup).
-   Needs `codex` installed and signed in:
+   Python** (system `python3` may lack `pyserial` and crash on startup).
+   Codex mode needs Codex/ChatGPT credentials configured on the host:
    ```bash
    cd ~/Documents/GitHub/ArmGPT      # on the main branch
-   ./venv/bin/python serial_codex_interface.py --port /dev/ttysNNN
+   ./venv/bin/python acorn_server.py --port /dev/ttysNNN
    ```
-3. Back in **Terminal A**, press RETURN → RETURN, then chat. Codex takes
-   ~20–60s per reply (it sends nothing until finished), so the sim waits up to
-   120s for the first byte.
-
-> Note: `serial_codex_interface.py` was written for a newer Codex; on
-> `codex-cli 0.144.6` the `--ask-for-approval never` and `--ephemeral` flags are
-> invalid. The working invocation is
-> `codex exec --sandbox read-only --skip-git-repo-check --cd <dir>
-> --output-last-message <file> --color never -`.
+3. Back in **Terminal A**, press RETURN → RETURN, then chat. Codex/ChatGPT
+   replies may take tens of seconds and send nothing until complete, so ACORN
+   waits up to `waitmax%` for the first byte.
 
 ---
 
 Two ways `acorn_sim.py` supplies replies:
 
 * **`--mock`** — canned replies, no server. Fast path for iterating on the UI.
-* **`--server`** — bridges to the real ArmGPT server (`serial_codex_interface.py`
-  → `codex`, or `arm_gpt_server.py` → Ollama) via a pty for genuine replies.
+* **`--server`** — bridges to the real hybrid ArmGPT server
+  (`acorn_server.py`) via a pty for genuine replies.
 
 > **What is verified:** the host-side `serial_bridge.py` (telnet handling, mock
 > replies, and the pty relay) was tested on this machine. The emulator/RISC OS
@@ -139,8 +151,8 @@ folder. Copy `ACORN` and `test/DIAL` there. To have RISC OS see them as text
 (so `*EXEC` works), give each a `,fff` filetype suffix on the host side:
 
 ```bash
-cp ACORN      <rpcemu>/machines/Default/hostfs/ACORN,fff
-cp test/DIAL  <rpcemu>/machines/Default/hostfs/DIAL,fff
+perl -pe 's/\n/\r/g' ACORN     > <rpcemu>/machines/Default/hostfs/ACORN,fff
+perl -pe 's/\n/\r/g' test/DIAL > <rpcemu>/machines/Default/hostfs/DIAL,fff
 ```
 
 Then, in RISC OS, turn each listing into a runnable BASIC program (same `*EXEC`
@@ -181,7 +193,7 @@ bridge, discards the modem's `CONNECT` chatter, and `CHAIN`s the unmodified
 `you >` → a reply streams back under `arm >` → back to `you >`. An empty line
 quits and restores the entry screen mode.
 
-### 7. Swap in the real ArmGPT server
+### 7. Swap in the real hybrid ArmGPT server
 
 Instead of `--mock`:
 
@@ -190,17 +202,18 @@ python3 serial_bridge.py --server
 # prints e.g.  server port: /dev/ttys012
 ```
 
-Then, in the `ArmGPT` repo (on the `macos` branch, with Ollama running and the
-`qwen2.5:1.5b` + `nomic-embed-text` models pulled and the index built):
+Then, in the `ArmGPT` repo, start the hybrid serial server. Local mode needs
+the configured local model runtime; codex mode needs Codex/ChatGPT credentials
+configured on the host:
 
 ```bash
-python3 arm_gpt_server.py --port /dev/ttys012
+python3 acorn_server.py --port /dev/ttys012
 ```
 
-Re-run `DIAL` in the emulator. Now `you >` prompts reach qwen2.5 and the real
-answer streams back. (The server ignores anything sent while it's generating,
-and ends its reply with a newline — which is exactly what ACORN's idle-gap
-detection expects, so no protocol changes are needed.)
+Re-run `DIAL` in the emulator. Now `you >` prompts reach the server and the
+real answer streams back. Try `/status`, `/mode local`, `/mode codex`, and
+`Ctrl-L`. The server ends each reply with a newline, and ACORN also has an
+idle-gap guard so it returns to the prompt after each response.
 
 ---
 
@@ -226,7 +239,7 @@ Two caveats:
 ```
 python3 serial_bridge.py --mock              # canned replies (default)
 python3 serial_bridge.py --mock --delay 2.5  # simulate LLM latency
-python3 serial_bridge.py --server            # relay to arm_gpt_server via a pty
+python3 serial_bridge.py --server            # relay to acorn_server.py via a pty
 python3 serial_bridge.py --port 5623         # change the TCP port (match DIAL)
 ```
 

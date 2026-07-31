@@ -8,15 +8,15 @@ and then passes bytes transparently (it negotiates telnet BINARY mode, so the
 link is 8-bit clean). This script sits on the other end of that TCP connection
 and gives ACORN something to talk to, in one of two modes:
 
-  --mock            Reply with canned/echoed text. No Ollama, no server, no
+  --mock            Reply with canned/echoed text. No live server and no
                     dependencies. Best for iterating on ACORN's flow and
                     look-and-feel: you see the prompt go out and a reply stream
                     back, and ACORN returns to the "you >" prompt.
 
   --server          Create a pseudo-terminal (pty) and print its device path.
-                    You point arm_gpt_server.py at that path with --port, and
+                    You point acorn_server.py at that path with --port, and
                     this bridge relays raw bytes between the emulator and the
-                    real ArmGPT server (which needs Ollama running).
+                    real hybrid ArmGPT server.
 
 Both modes handle the minimal telnet negotiation RPCEmu performs, so the guest
 sees a clean binary stream.
@@ -26,7 +26,7 @@ Examples
     python3 serial_bridge.py --mock --delay 2.0
     python3 serial_bridge.py --server
         -> prints e.g. "server port: /dev/ttys012"
-        then in the ArmGPT repo:  python3 arm_gpt_server.py --port /dev/ttys012
+        then in the ArmGPT repo:  python3 acorn_server.py --port /dev/ttys012
 
 This file is pure standard library (no pyserial / socat needed).
 """
@@ -169,7 +169,7 @@ def run_mock(listener, delay):
 def run_server(listener):
     master, slave = os.openpty()
     print("server port: %s" % os.ttyname(slave), flush=True)
-    print("  -> in the ArmGPT repo:  python3 arm_gpt_server.py --port %s"
+    print("  -> in the ArmGPT repo:  python3 acorn_server.py --port %s"
           % os.ttyname(slave), flush=True)
     while True:
         conn = accept(listener)
@@ -187,9 +187,9 @@ def run_server(listener):
                     if reply:
                         conn.sendall(reply)
                     if clean:
-                        os.write(master, clean)   # -> arm_gpt_server (readline)
+                        os.write(master, clean)   # -> acorn_server.py (readline)
                 if master in r:
-                    out = os.read(master, 4096)    # reply from arm_gpt_server
+                    out = os.read(master, 4096)    # reply from acorn_server.py
                     if out:
                         conn.sendall(esc(out))
         except (ConnectionResetError, BrokenPipeError, OSError):
@@ -209,7 +209,7 @@ def main():
     mode.add_argument("--mock", action="store_true",
                       help="answer with canned replies (default)")
     mode.add_argument("--server", action="store_true",
-                      help="relay to arm_gpt_server.py via a pseudo-terminal")
+                      help="relay to acorn_server.py via a pseudo-terminal")
     ap.add_argument("--delay", type=float, default=1.0,
                     help="mock: seconds to wait before replying (fakes think time)")
     args = ap.parse_args()
