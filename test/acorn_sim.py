@@ -280,7 +280,6 @@ class App:
         if not lines:
             lines = [("ArmGPT is online. The serial link is open.", 0),
                      ("Commands: /status /help /mode local /mode cloud /quit", 0),
-                     ("Ctrl-L switches local/cloud mode.", 0),
                      ("Say something and press RETURN.", 0), ("", 0)]
         if self.thinking:
             lines.append(("arm > thinking (cloud can take up to a minute)...", 1))

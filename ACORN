@@ -104,7 +104,6 @@
  1010 DEF PROCintro
  1020 COLOUR 0:PRINT "ArmGPT online. Serial link open."
   1030 PRINT "Commands: /status  /help  /mode local  /mode cloud  /quit"
-  1035 PRINT "Ctrl-L switches local/cloud mode."
   1040 ENDPROC
  1050 REM
  1060 REM ---- replay a conversation's stored transcript ----
