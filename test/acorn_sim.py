@@ -66,7 +66,7 @@ class Mock:
     def __init__(self, delay):
         self.delay = delay
         self.n = 0
-        self.mode = "codex"
+        self.mode = "local"
 
     def ask(self, prompt):
         if self.delay:
@@ -151,7 +151,7 @@ class App:
         self.text = ""
         self.thinking = False
         self.quit = False
-        self.mode = "codex"
+        self.mode = "local"
         self.cursor = None
         self.menu_rows = {}   # screen row -> ('new'|index)
 

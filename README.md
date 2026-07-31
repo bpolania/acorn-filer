@@ -14,7 +14,7 @@ Interactive chat client: type a prompt, ACORN sends it over the serial port and 
 - Authentic RISC OS look (MODE 12): white background, black text, with an inverted black status bar pinned across the top and the conversation scrolling below it; a red `arm >` label marks the machine's replies
 - DOS-style conversation menu down the left (blue bordered panel, `CHATS` title, white selection bar): `TAB` switches conversation, `Ctrl-N` starts a new one, and each conversation keeps its own local scrollback. The border is drawn with custom double-line box characters defined via `VDU 23`. (The AI itself is stateless per message, so conversations are a local grouping on the Acorn side.)
 - Type at the `you >` prompt and press RETURN; `ESCAPE` quits, and `/quit` exits locally without sending `/quit` to the server
-- The current server mode is shown in the status bar and sidebar. `Ctrl-L` toggles local/codex mode by sending `/mode local` or `/mode codex` as plain text.
+- The current server mode is shown in the status bar and sidebar. ACORN starts in visible `local` mode; `Ctrl-L` toggles local/codex mode by sending `/mode local` or `/mode codex` as plain text.
 - Server commands are passed through exactly as typed, including `/mode local`, `/mode codex`, `/local <prompt>`, `/codex <prompt>`, `/status`, and `/help`.
 - Plain text prompts are sent unchanged and routed by the Python host's current mode.
 - Reads the received byte correctly from R1 and tests the carry flag for data-ready
@@ -164,10 +164,11 @@ Supported server commands:
 /help
 ```
 
-Typing `Ctrl-L` in `ACORN` toggles the current mode and sends `/mode local` or
-`/mode codex` to the server. Typing `/mode local` or `/mode codex` yourself also
-updates the visible mode in the ACORN UI before the command is sent. Plain text
-prompts are sent unchanged and the host routes them using its current mode.
+`ACORN` starts with visible mode `local`. Typing `Ctrl-L` toggles the current
+mode and sends `/mode local` or `/mode codex` to the server; the first `Ctrl-L`
+sends `/mode codex`. Typing `/mode local` or `/mode codex` yourself also updates
+the visible mode in the ACORN UI before the command is sent. Plain text prompts
+are sent unchanged and the host routes them using its current mode.
 
 `/quit` is local to `ACORN`; it exits the BASIC client and is not sent to the
 server.

@@ -63,7 +63,8 @@ ACORN sends plain text only. These commands are preserved exactly:
 ```
 
 Plain prompts are sent unchanged and the server routes them using its current
-mode. `Ctrl-L` in ACORN toggles local/codex by sending `/mode local` or
+mode. ACORN starts with visible mode `local`; `Ctrl-L` toggles local/codex by
+sending `/mode local` or `/mode codex`, so the first `Ctrl-L` sends
 `/mode codex`. `/quit` exits ACORN locally and is not sent to the server.
 
 **Easiest — one command** (the sim launches the server against its own pty, so

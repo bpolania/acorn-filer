@@ -44,7 +44,7 @@
   440 ENDPROC
   450 REM
   460 DEF PROCinit
-  470 nconv%=1:active%=1:quit%=FALSE:mode$="codex"
+  470 nconv%=1:active%=1:quit%=FALSE:mode$="local"
   480 cnm$(1)="Chat 1":lc%(1)=0
   490 ENDPROC
   500 REM
@@ -234,20 +234,21 @@
  2262 LOCAL cmd$
  2263 IF q$<>"" THEN VDU 7:ENDPROC
  2264 IF mode$="local" THEN mode$="codex":cmd$="/mode codex" ELSE mode$="local":cmd$="/mode local"
- 2265 PROCtopbar:PRINT
+ 2265 PROCmodeui:PRINT cmd$
  2266 PROCstore(active%,"you > "+cmd$,0)
  2267 PROCsend(cmd$)
  2268 PROCreceive
  2269 PROCstore(active%,"",0):PRINT:PROCprompt
  2270 ENDPROC
  2271 DEF PROCnotecmd(t$)
- 2272 IF t$="/mode local" THEN mode$="local":PROCtopbar
- 2273 IF t$="/mode codex" THEN mode$="codex":PROCtopbar
+ 2272 IF t$="/mode local" THEN mode$="local":PROCmodeui
+ 2273 IF t$="/mode codex" THEN mode$="codex":PROCmodeui
  2274 ENDPROC
- 2275 DEF PROCtopbar
- 2276 VDU 26:PROCstatus:VDU 28,WL%,WB%,WR%,WT%
- 2277 ENDPROC
- 2278 REM
+ 2275 DEF PROCmodeui
+ 2276 LOCAL x%,y%:x%=POS:y%=VPOS
+ 2277 VDU 26:PROCstatus:PROCmenu:VDU 28,WL%,WB%,WR%,WT%:COLOUR 128+7:COLOUR 0:PRINT TAB(x%,y%);
+ 2278 ENDPROC
+ 2279 REM
  2280 DEF PROCbye
  2290 MODE oldmode%                     :REM restore the mode we started in
  2300 SYS "OS_Byte",2,0
