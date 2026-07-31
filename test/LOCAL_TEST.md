@@ -40,7 +40,7 @@ This reproduces ACORN's full UI in your terminal — the solid `armGPT` splash,
 the black-on-white status bar, the **DOS conversation menu** down the left, and
 colour-coded `you >` / `arm >` prompts. Type and press RETURN to send; **TAB**
 or **up/down** switch conversation, **Ctrl-N** starts a new one, **Ctrl-L**
-switches local/codex server mode, and **ESC** quits.
+switches local/cloud server mode, and **ESC** quits.
 Each conversation keeps its own history. It mirrors ACORN's layout, menu and
 colours, but a terminal can't be a true white MODE 12 screen — for the real
 pixels, use the emulator path below.
@@ -49,36 +49,38 @@ pixels, use the emulator path below.
 
 The `ArmGPT` repo's host server is `acorn_server.py`. It reads one
 newline-terminated prompt from serial and sends back one newline-terminated
-response. It can route requests to either a local model or Codex/ChatGPT.
+response. It can route requests to either a local model or cloud model.
 
 ACORN sends plain text only. These commands are preserved exactly:
 
 ```
 /mode local
-/mode codex
+/mode cloud
 /local <prompt>
-/codex <prompt>
+/cloud <prompt>
 /status
 /help
 ```
 
 Plain prompts are sent unchanged and the server routes them using its current
-mode. ACORN starts with visible mode `local`; `Ctrl-L` toggles local/codex by
-sending `/mode local` or `/mode codex`, so the first `Ctrl-L` sends
-`/mode codex`. `/quit` exits ACORN locally and is not sent to the server.
+mode. ACORN starts with visible mode `local`; `Ctrl-L` toggles local/cloud by
+sending `/mode local` or `/mode cloud`, so the first `Ctrl-L` sends
+`/mode cloud`. If the host still expects older codex command names, ACORN maps
+cloud commands to the codex protocol names on the serial wire. `/quit` exits
+ACORN locally and is not sent to the server.
 
 **Easiest — one command** (the sim launches the server against its own pty, so
 there's no second terminal and no pty-path copying):
 
 ```bash
 cd acorn-filer/test
-python3 acorn_sim.py --codex
+python3 acorn_sim.py --cloud
 #   (assumes the ArmGPT repo at ~/Documents/GitHub/ArmGPT on its main branch;
 #    override with --armgpt-dir <path>. Server log: /tmp/acorn_hybrid_server.log)
 ```
 
 Press RETURN past the splash and chat. Use `/status`, `/mode local`,
-`/mode codex`, or `Ctrl-L` to verify server mode switching.
+`/mode cloud`, or `Ctrl-L` to verify server mode switching.
 
 **Manual (two terminals)** — the same thing wired by hand, verified on this
 machine:
@@ -91,12 +93,12 @@ machine:
    ```
 2. **Terminal B** — point the server at that pty, **using the ArmGPT venv's
    Python** (system `python3` may lack `pyserial` and crash on startup).
-   Codex mode needs Codex/ChatGPT credentials configured on the host:
+   Cloud mode needs the cloud/ChatGPT credentials configured on the host:
    ```bash
    cd ~/Documents/GitHub/ArmGPT      # on the main branch
    ./venv/bin/python acorn_server.py --port /dev/ttysNNN
    ```
-3. Back in **Terminal A**, press RETURN → RETURN, then chat. Codex/ChatGPT
+3. Back in **Terminal A**, press RETURN → RETURN, then chat. Cloud/ChatGPT
    replies may take tens of seconds and send nothing until complete, so ACORN
    waits up to `waitmax%` for the first byte.
 
@@ -204,7 +206,7 @@ python3 serial_bridge.py --server
 ```
 
 Then, in the `ArmGPT` repo, start the hybrid serial server. Local mode needs
-the configured local model runtime; codex mode needs Codex/ChatGPT credentials
+the configured local model runtime; cloud mode needs cloud/ChatGPT credentials
 configured on the host:
 
 ```bash
@@ -212,7 +214,7 @@ python3 acorn_server.py --port /dev/ttys012
 ```
 
 Re-run `DIAL` in the emulator. Now `you >` prompts reach the server and the
-real answer streams back. Try `/status`, `/mode local`, `/mode codex`, and
+real answer streams back. Try `/status`, `/mode local`, `/mode cloud`, and
 `Ctrl-L`. The server ends each reply with a newline, and ACORN also has an
 idle-gap guard so it returns to the prompt after each response.
 

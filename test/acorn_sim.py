@@ -9,7 +9,7 @@ colour-coded you> / arm> prompts. Multiple conversations, each with its own
 history.
 
 Controls:  type + RETURN to send   TAB or up/down = switch chat
-           Ctrl-N = new chat        Ctrl-L = local/codex mode
+           Ctrl-N = new chat        Ctrl-L = local/cloud mode
            ESC = quit
 
 Reply sources:
@@ -75,13 +75,13 @@ class Mock:
         if p == "/mode local":
             self.mode = "local"
             return "Mode set to local."
-        if p == "/mode codex":
-            self.mode = "codex"
-            return "Mode set to codex."
+        if p in ("/mode cloud", "/mode codex"):
+            self.mode = "cloud"
+            return "Mode set to cloud."
         if p == "/status":
             return "Mode: %s." % self.mode
         if p == "/help":
-            return "Commands: /mode local, /mode codex, /local, /codex, /status, /help."
+            return "Commands: /mode local, /mode cloud, /local, /cloud, /status, /help."
         if p in ("bye", "quit", "exit"):
             return "Until next boot. 73!"
         if "year" in p:
@@ -116,7 +116,7 @@ class Server:
     def ask(self, prompt):
         os.write(self.master, (prompt + "\r\n").encode("latin-1"))
         buf = bytearray()
-        # Codex sends nothing until finished (~20-60s); wait generously for the
+        # Cloud replies may send nothing until finished; wait generously for the
         # first byte, then a short idle gap once the reply starts arriving.
         while True:
             r, _, _ = select.select([self.master], [], [], 120 if not buf else 3)
@@ -279,11 +279,11 @@ class App:
         lines = list(conv["lines"])
         if not lines:
             lines = [("ArmGPT is online. The serial link is open.", 0),
-                     ("Commands: /status /help /mode local /mode codex /quit", 0),
-                     ("Ctrl-L switches local/codex mode.", 0),
+                     ("Commands: /status /help /mode local /mode cloud /quit", 0),
+                     ("Ctrl-L switches local/cloud mode.", 0),
                      ("Say something and press RETURN.", 0), ("", 0)]
         if self.thinking:
-            lines.append(("arm > thinking (Codex can take up to a minute)...", 1))
+            lines.append(("arm > thinking (cloud can take up to a minute)...", 1))
             input_line = None
         else:
             input_line = "you > " + self.text
@@ -395,7 +395,7 @@ class App:
         self.note_cmd(line)
         self.thinking = True
         self.paint()
-        reply = self.backend.ask(line)
+        reply = self.backend.ask(self.wire(line))
         self.thinking = False
         self.add_msg(2, reply or "(no reply)")
         self.paint()
@@ -403,12 +403,12 @@ class App:
     def toggle_mode(self):
         if self.text:
             return
-        cmd = "/mode codex" if self.mode == "local" else "/mode local"
+        cmd = "/mode cloud" if self.mode == "local" else "/mode local"
         self.add_msg(1, cmd)
         self.note_cmd(cmd)
         self.thinking = True
         self.paint()
-        reply = self.backend.ask(cmd)
+        reply = self.backend.ask(self.wire(cmd))
         self.thinking = False
         self.add_msg(2, reply or "(no reply)")
         self.paint()
@@ -416,8 +416,15 @@ class App:
     def note_cmd(self, line):
         if line == "/mode local":
             self.mode = "local"
-        elif line == "/mode codex":
-            self.mode = "codex"
+        elif line in ("/mode cloud", "/mode codex"):
+            self.mode = "cloud"
+
+    def wire(self, line):
+        if line == "/mode cloud":
+            return "/mode codex"
+        if line.startswith("/cloud "):
+            return "/codex " + line[7:]
+        return line
 
     def type_char(self, ch):
         if len(self.text) < self.cols - SBW - 10:
@@ -479,7 +486,7 @@ class App:
             print("Link closed. Bye.")
 
 
-def run_codex(armgpt_dir):
+def run_cloud(armgpt_dir):
     """Auto-launch the ArmGPT hybrid server against our own pty - one command,
     no second terminal, no pty-path copying."""
     import subprocess
@@ -524,17 +531,19 @@ def main():
     mode.add_argument("--mock", action="store_true", help="canned replies (default)")
     mode.add_argument("--server", action="store_true",
                       help="relay to a server you start yourself, via a pty")
-    mode.add_argument("--codex", action="store_true",
+    mode.add_argument("--cloud", dest="cloud", action="store_true",
                       help="auto-launch the ArmGPT hybrid server (one command, "
                            "no second terminal)")
+    mode.add_argument("--codex", dest="cloud", action="store_true",
+                      help=argparse.SUPPRESS)
     ap.add_argument("--armgpt-dir", default="~/Documents/GitHub/ArmGPT",
-                    help="ArmGPT repo location for --codex")
+                    help="ArmGPT repo location for --cloud")
     ap.add_argument("--delay", type=float, default=1.0,
                     help="mock: think-time seconds before replying (default 1)")
     args = ap.parse_args()
 
-    if args.codex:
-        run_codex(args.armgpt_dir)
+    if args.cloud:
+        run_cloud(args.armgpt_dir)
         return
 
     backend = Server() if args.server else Mock(args.delay)

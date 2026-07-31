@@ -77,7 +77,9 @@ Expected files on the floppy:
 - ACORNUI  from branch wimp-application
 
 ACORN talks to the host-side hybrid server using plain newline-terminated text.
-It supports `/mode local`, `/mode codex`, `/local <prompt>`, `/codex <prompt>`,
-`/status`, and `/help`; `Ctrl-L` toggles local/codex mode by sending `/mode ...`
-to the server. `/quit` exits locally and is not sent.
+It supports `/mode local`, `/mode cloud`, `/local <prompt>`, `/cloud <prompt>`,
+`/status`, and `/help`; `Ctrl-L` toggles local/cloud mode by sending `/mode ...`
+to the server. If the host still expects older codex command names, ACORN maps
+cloud commands to the codex protocol names on the serial wire. `/quit` exits
+locally and is not sent.
 ```

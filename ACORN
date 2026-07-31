@@ -3,7 +3,7 @@
    30 REM MODE 12 chat client with a DOS-style conversation menu:
    40 REM  - type at "you >" and press RETURN; the reply streams back
    50 REM  - TAB switches conversation, Ctrl-N starts a new one
-   60 REM  - Ctrl-L toggles local/codex server mode
+   60 REM  - Ctrl-L toggles local/cloud server mode
    70 REM  - ESCAPE quits (the AI itself has no cross-message memory;
    80 REM    conversations are a local grouping on the Acorn side)
    90 REM
@@ -37,7 +37,7 @@
   370 VDU 23,229,&24,&24,&E4,&04,&04,&FC,0,0   :REM bottom-right
   380 VDU 23,230,&24,&24,&27,&24,&24,&27,&24,&24 :REM left tee
   390 VDU 23,231,&24,&24,&E4,&24,&24,&E4,&24,&24 :REM right tee
- 400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, for Codex) / idle (3s), cs
+ 400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, cloud) / idle (3s), cs
  410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
   420 MAXC%=6:MAXL%=60
   430 mask%=&02:DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
@@ -103,8 +103,8 @@
  1000 REM
  1010 DEF PROCintro
  1020 COLOUR 0:PRINT "ArmGPT online. Serial link open."
-  1030 PRINT "Commands: /status  /help  /mode local  /mode codex  /quit"
-  1035 PRINT "Ctrl-L switches local/codex mode."
+  1030 PRINT "Commands: /status  /help  /mode local  /mode cloud  /quit"
+  1035 PRINT "Ctrl-L switches local/cloud mode."
   1040 ENDPROC
  1050 REM
  1060 REM ---- replay a conversation's stored transcript ----
@@ -145,14 +145,16 @@
   1410 DEF PROCbksp
   1420 IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
   1430 ENDPROC
-  1440 REM
-  1450 DEF PROCenter
+ 1440 REM
+ 1450 DEF PROCenter
+ 1455 REM tx$ is global so PROCwire can rewrite it
   1460 IF q$="" THEN PRINT:PROCprompt:ENDPROC
   1470 PRINT
   1480 IF q$="/quit" THEN quit%=TRUE:ENDPROC
   1490 PROCstore(active%,"you > "+q$,0)
   1500 PROCnotecmd(q$)
-  1510 PROCsend(q$)
+ 1505 tx$=q$:PROCwire
+  1510 PROCsend(tx$)
   1520 PROCreceive
   1530 PROCstore(active%,"",0)
   1540 PRINT
@@ -233,29 +235,33 @@
  2261 DEF PROCtogglemode
  2262 LOCAL cmd$
  2263 IF q$<>"" THEN VDU 7:ENDPROC
- 2264 IF mode$="local" THEN mode$="codex":cmd$="/mode codex" ELSE mode$="local":cmd$="/mode local"
+ 2264 IF mode$="local" THEN mode$="cloud":cmd$="/mode cloud" ELSE mode$="local":cmd$="/mode local"
  2265 PROCmodeui:PRINT cmd$
  2266 PROCstore(active%,"you > "+cmd$,0)
- 2267 PROCsend(cmd$)
+ 2267 tx$=cmd$:PROCwire:PROCsend(tx$)
  2268 PROCreceive
  2269 PROCstore(active%,"",0):PRINT:PROCprompt
  2270 ENDPROC
  2271 DEF PROCnotecmd(t$)
  2272 IF t$="/mode local" THEN mode$="local":PROCmodeui
- 2273 IF t$="/mode codex" THEN mode$="codex":PROCmodeui
+ 2273 IF t$="/mode cloud" OR t$="/mode codex" THEN mode$="cloud":PROCmodeui
  2274 ENDPROC
- 2275 DEF PROCmodeui
- 2276 LOCAL x%,y%:x%=POS:y%=VPOS
- 2277 VDU 26:PROCstatus:PROCmenu:VDU 28,WL%,WB%,WR%,WT%:COLOUR 128+7:COLOUR 0:PRINT TAB(x%,y%);
+ 2275 DEF PROCwire
+ 2276 IF tx$="/mode cloud" THEN tx$="/mode codex"
+ 2277 IF LEFT$(tx$,7)="/cloud " THEN tx$="/codex "+MID$(tx$,8)
  2278 ENDPROC
- 2279 REM
- 2280 DEF PROCbye
- 2290 MODE oldmode%                     :REM restore the mode we started in
- 2300 SYS "OS_Byte",2,0
- 2310 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
- 2320 PRINT'"Link closed. Bye."
- 2330 END
- 2340 ENDPROC
+ 2279 DEF PROCmodeui
+ 2280 LOCAL x%,y%:x%=POS:y%=VPOS
+ 2281 VDU 26:PROCstatus:PROCmenu:VDU 28,WL%,WB%,WR%,WT%:COLOUR 128+7:COLOUR 0:PRINT TAB(x%,y%);
+ 2282 ENDPROC
+ 2283 REM
+ 2290 DEF PROCbye
+ 2300 MODE oldmode%                     :REM restore the mode we started in
+ 2310 SYS "OS_Byte",2,0
+ 2320 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
+ 2330 PRINT'"Link closed. Bye."
+ 2340 END
+ 2345 ENDPROC
  2350 REM
  2360 REM ---- full-screen splash: centres the wordmark, waits for RETURN ----
  2370 DEF PROCbanner
