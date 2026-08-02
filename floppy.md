@@ -9,7 +9,7 @@ repository.
 
 Goal:
 - Put the real serial client from the canonical main branch on the floppy as ACORN.
-- Put the main-derived ACORNUI client from the canonical main branch on the
+- Put the Desktop/TaskWindow ACORNUI client from the canonical main branch on the
   same floppy as ACORNUI.
 - Do not create pull requests.
 - Do not rewrite history.
@@ -33,7 +33,7 @@ Steps:
    git switch main
    perl -pe 's/\n/\r/g' ACORN > /tmp/acorn-floppy/ACORN
 
-4. Copy the main-derived ACORNUI client as a CR-only text listing:
+4. Copy the Desktop/TaskWindow ACORNUI client as a CR-only text listing:
    perl -pe 's/\n/\r/g' ACORNUI > /tmp/acorn-floppy/ACORNUI
 
 5. Ask the user for the mounted floppy path if it is not obvious. On macOS, it
@@ -60,7 +60,7 @@ Steps:
     SAVE "ACORNRUN"
     CHAIN "ACORNRUN"
 
-    Or for the ACORNUI build:
+    Or for the ACORNUI Desktop/TaskWindow build:
     *SETTYPE ACORNUI &FFF
     BASIC
     NEW
@@ -78,4 +78,7 @@ It supports `/mode local`, `/mode cloud`, `/local <prompt>`, `/cloud <prompt>`,
 to the server. If the host still expects older codex command names, ACORN maps
 cloud commands to the codex protocol names on the serial wire. `/quit` exits
 locally and is not sent.
+
+ACORNUI uses the same serial protocol, but it avoids full-screen MODE 12 drawing
+so it can be run from a RISC OS Desktop TaskWindow or command window.
 ```

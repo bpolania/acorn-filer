@@ -26,11 +26,18 @@ For the real Archimedes display, run `ACORN` from the full-screen command line
 after exiting the RISC OS desktop. Desktop Task windows are not raw MODE 12
 screens and will not render the fixed 80x32 VDU layout correctly.
 
-### ACORNUI - Main-Derived UI Build
-`ACORNUI` is now kept directly on `main` and is generated from the current
-`ACORN` codebase. Copy it to a floppy when you want a separate runnable file
-name for UI/WIMP-facing experiments while preserving the same current
-local/cloud UX and serial protocol behavior as `ACORN`.
+### ACORNUI - Desktop/TaskWindow Client
+`ACORNUI` is the RISC OS Desktop-friendly version of the ArmGPT client. It
+keeps the same proven serial setup and local/cloud text protocol as `ACORN`,
+but removes the full-screen `MODE 12` UI, splash screen, fixed `TAB()` layout,
+and screen redraw assumptions. It is intended to run inside a Desktop
+TaskWindow or command window.
+
+`ACORNUI` supports `/mode local`, `/mode cloud`, `/local <prompt>`,
+`/cloud <prompt>`, `/status`, `/help`, and `/quit`. `Ctrl-L` toggles the
+visible local/cloud mode and sends the corresponding `/mode ...` command to the
+host. For compatibility with older host servers, cloud commands are still
+mapped to the older codex wire commands before transmission.
 
 ### MINRX - Minimal Receiver
 Simple diagnostic program that displays received bytes in hexadecimal.
@@ -144,6 +151,17 @@ NEW
 *EXEC ACORN
 SAVE "ACORNRUN"
 CHAIN "ACORNRUN"
+```
+
+Quick ACORNUI startup from a text listing in a Desktop TaskWindow or command
+window:
+```
+*SETTYPE ACORNUI &FFF
+BASIC
+NEW
+*EXEC ACORNUI
+SAVE "ACORNUIR"
+CHAIN "ACORNUIR"
 ```
 
 If a file is already a saved/tokenized BASIC program rather than a text listing,

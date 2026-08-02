@@ -1,310 +1,148 @@
-   10 REM ACORNUI - ArmGPT serial chat client for RISC OS (RS-423)
-   20 REM ----------------------------------------------------------
-   30 REM MODE 12 chat client with a DOS-style conversation menu:
-   40 REM  - type at "you >" and press RETURN; the reply streams back
-   50 REM  - TAB switches conversation, Ctrl-N starts a new one
-   60 REM  - Ctrl-L toggles local/cloud server mode
-   70 REM  - ESCAPE quits (the AI itself has no cross-message memory;
-   80 REM    conversations are a local grouping on the Acorn side)
-   90 REM
+   10 REM ACORNUI - ArmGPT Desktop/TaskWindow serial client
+   20 REM --------------------------------------------------
+   30 REM WIMP-safe BASIC version: no MODE changes, no full-screen VDU layout.
+   40 REM Run it from a RISC OS Desktop TaskWindow or command window.
+   50 REM Serial protocol matches ACORN: plain text plus newline.
+   60 REM Ctrl-L toggles local/cloud; /quit exits locally.
+   70 REM
   100 ON ERROR PROCbye
   110 PROCsetup
-  120 PROCbanner
-  130 PROCinit
-  140 PROCrefresh
-  150 PROCloop
-  160 PROCbye
-  170 END
-  180 REM
-  190 REM ==================== procedures ====================
-  200 REM
-  210 DEF PROCsetup
-  220 SYS "OS_Byte",135 TO ,,oldmode% :REM remember the mode we started in
-  230 MODE 12                          :REM 80x32, 16 colours
-  240 SYS "OS_Byte",2,2               :REM matches SERIALRW input stream setup
-  250 VDU 4                            :REM print text at the text cursor
-  260 SYS "OS_SerialOp",0,4+32,0       :REM link/handshake state (matches SERIALRW)
-  270 SYS "OS_SerialOp",1,0            :REM data format (matches armgpt)
-  280 SYS "OS_SerialOp",5,7            :REM 9600 baud receive
-  290 SYS "OS_SerialOp",6,7            :REM 9600 baud transmit
- 300 REM -- custom characters: 224-231 double-line box, 232 solid block --
- 310 BLK%=232:VDU 23,BLK%,255,255,255,255,255,255,255,255
-  320 VDU 23,224,0,0,255,0,0,255,0,0          :REM horizontal
-  330 VDU 23,225,&24,&24,&24,&24,&24,&24,&24,&24 :REM vertical
-  340 VDU 23,226,0,0,&3F,&20,&20,&27,&24,&24   :REM top-left
-  350 VDU 23,227,0,0,&FC,&04,&04,&E4,&24,&24   :REM top-right
-  360 VDU 23,228,&24,&24,&27,&20,&20,&3F,0,0   :REM bottom-left
-  370 VDU 23,229,&24,&24,&E4,&04,&04,&FC,0,0   :REM bottom-right
-  380 VDU 23,230,&24,&24,&27,&24,&24,&27,&24,&24 :REM left tee
-  390 VDU 23,231,&24,&24,&E4,&24,&24,&E4,&24,&24 :REM right tee
- 400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, cloud) / idle (3s), cs
- 410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
-  420 MAXC%=6:MAXL%=60
-  430 mask%=&02:DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
-  440 ENDPROC
-  450 REM
-  460 DEF PROCinit
-  470 nconv%=1:active%=1:quit%=FALSE:mode$="local"
-  480 cnm$(1)="Chat 1":lc%(1)=0
-  490 ENDPROC
-  500 REM
-  510 REM ---- full redraw: status bar, sidebar menu, chat window ----
- 520 DEF PROCrefresh
- 530 VDU 26                            :REM restore the full text window
- 540 COLOUR 128+7:COLOUR 0:CLS         :REM clear stale splash/window contents
- 550 PROCstatus
- 560 PROCmenu
- 570 VDU 28,WL%,WB%,WR%,WT%            :REM confine text to the chat column
- 580 COLOUR 128+7:COLOUR 0:CLS         :REM white chat area, black text
- 590 IF lc%(active%)=0 THEN PROCintro ELSE PROCshow
- 600 PROCprompt
- 605 ENDPROC
-  610 REM
-  620 DEF PROCstatus
-  630 LOCAL bar$,r$,pad%
-  640 bar$=" ArmGPT":r$="mode "+mode$+"  ^L switch "
-  650 pad%=79-LEN(bar$)-LEN(r$):IF pad%<1 THEN pad%=1
-  660 COLOUR 128+0:COLOUR 7
-  670 PRINT TAB(0,0);bar$;STRING$(pad%," ");r$;
-  680 ENDPROC
-  690 REM
-  700 REM ---- the DOS-style conversation menu down the left ----
-  710 DEF PROCmenu
-  720 LOCAL r%,i%
-  730 COLOUR 128+4:COLOUR 7
-  740 FOR r%=1 TO WB%:PRINT TAB(0,r%);STRING$(SBW%," ");:NEXT
-  750 PRINT TAB(0,1);CHR$(226);STRING$(SBW%-2,CHR$(224));CHR$(227);
-  760 FOR r%=2 TO WB%-1:PRINT TAB(0,r%);CHR$(225);TAB(SBW%-1,r%);CHR$(225);:NEXT
-  770 PRINT TAB(0,WB%);CHR$(228);STRING$(SBW%-2,CHR$(224));CHR$(229);
-  780 COLOUR 3:PRINT TAB((SBW%-5) DIV 2,2);"CHATS";
-  790 COLOUR 7:PRINT TAB(0,3);CHR$(230);STRING$(SBW%-2,CHR$(224));CHR$(231);
-  800 PRINT TAB(2,5);"+ New chat";
-  810 FOR i%=1 TO nconv%
-  820   IF i%=active% THEN PROCitemon(i%) ELSE PROCitemoff(i%)
-  830 NEXT
-  840 COLOUR 128+4:COLOUR 7
-  850 PRINT TAB(2,WB%-5);"mode ";mode$;
-  860 PRINT TAB(2,WB%-4);"TAB  switch";
-  870 PRINT TAB(2,WB%-3);CHR$(94);"N   new chat";
-  875 PRINT TAB(2,WB%-2);CHR$(94);"L   mode";
-  880 PRINT TAB(2,WB%-1);"ESC  quit";
-  885 ENDPROC
+  120 PROCintro
+  130 PROCloop
+  140 PROCbye
+  150 END
+  160 REM
+  170 REM ==================== setup ====================
+  180 DEF PROCsetup
+  190 SYS "OS_Byte",2,2
+  200 VDU 4
+  210 SYS "OS_SerialOp",0,4+32,0
+  220 SYS "OS_SerialOp",1,0
+  230 SYS "OS_SerialOp",5,7
+  240 SYS "OS_SerialOp",6,7
+  250 mask%=&02:waitmax%=12000:idlegap%=300
+  260 maxin%=180:mode$="local":quit%=FALSE
+  270 ENDPROC
+  280 REM
+  290 DEF PROCintro
+  300 PRINT
+  310 PRINT "ArmGPT Desktop client"
+  320 PRINT "Serial link: 9600 baud, 8N1"
+  330 PRINT "Commands: /status /mode local  /mode cloud  /quit"
+  340 PROCstatus
+  350 ENDPROC
+  360 REM
+  370 DEF PROCstatus
+  380 PRINT "Mode: ";mode$
+  390 ENDPROC
+  400 REM
+  410 REM ==================== main loop ====================
+  420 DEF PROCloop
+  430 REPEAT
+  440   PROCprompt
+  450   IF NOT quit% THEN PROCsubmit
+  460 UNTIL quit%
+  470 ENDPROC
+  480 REM
+  490 DEF PROCprompt
+  500 q$=""
+  510 COLOUR 0:PRINT "you (";mode$;") > ";
+  520 REPEAT
+  530   k%=GET
+  540   CASE k% OF
+  550     WHEN 13:PRINT:done%=TRUE
+  560     WHEN 8,127:IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
+  570     WHEN 12:PRINT:PROCtogglemode:PRINT:COLOUR 0:PRINT "you (";mode$;") > ";q$;
+  580     WHEN 27:q$="/quit":PRINT "/quit":done%=TRUE
+  590     OTHERWISE
+  600       IF k%>=32 AND k%<127 AND LEN(q$)<maxin% THEN q$=q$+CHR$(k%):VDU k%
+  610   ENDCASE
+  620 UNTIL done%
+  630 done%=FALSE
+  640 ENDPROC
+  650 REM
+  660 DEF PROCsubmit
+  670 IF q$="" THEN ENDPROC
+  680 IF q$="/quit" THEN quit%=TRUE:ENDPROC
+  690 PROCnotecmd(q$)
+  700 tx$=q$:PROCwire
+  710 PROCsend(tx$)
+  720 PROCreceive
+  730 ENDPROC
+  740 REM
+  750 DEF PROCtogglemode
+  760 LOCAL cmd$
+  770 IF mode$="local" THEN cmd$="/mode cloud" ELSE cmd$="/mode local"
+  780 PRINT "you > ";cmd$
+  790 PROCnotecmd(cmd$)
+  800 tx$=cmd$:PROCwire
+  810 PROCsend(tx$)
+  820 PROCreceive
+  830 ENDPROC
+  840 REM
+  850 DEF PROCnotecmd(t$)
+  860 IF t$="/mode local" THEN mode$="local"
+  870 IF t$="/mode cloud" OR t$="/mode codex" THEN mode$="cloud"
+  880 ENDPROC
   890 REM
-  900 DEF PROCitemon(i%)
-  910 COLOUR 128+7:COLOUR 0
-  920 PRINT TAB(1,6+i%);STRING$(SBW%-2," ");
-  930 PRINT TAB(2,6+i%);cnm$(i%);
-  940 COLOUR 128+4:COLOUR 7
-  950 ENDPROC
-  960 REM
-  970 DEF PROCitemoff(i%)
-  980 COLOUR 128+4:COLOUR 7:PRINT TAB(2,6+i%);cnm$(i%);
-  990 ENDPROC
- 1000 REM
- 1010 DEF PROCintro
- 1020 COLOUR 0:PRINT "ArmGPT online. Serial link open."
-  1030 PRINT "Commands: /status /mode local  /mode cloud  /quit"
-  1040 ENDPROC
+  900 DEF PROCwire
+  910 IF tx$="/mode cloud" THEN tx$="/mode codex"
+  920 IF LEFT$(tx$,7)="/cloud " THEN tx$="/codex "+MID$(tx$,8)
+  930 ENDPROC
+  940 REM
+  950 REM ==================== serial send/receive ====================
+  960 DEF PROCsend(t$)
+  970 LOCAL i%
+  980 FOR i%=1 TO LEN(t$):PROCtx(ASC(MID$(t$,i%,1))):NEXT
+  990 PROCtx(13):PROCtx(10)
+ 1000 ENDPROC
+ 1010 REM
+ 1020 DEF PROCtx(b%)
+ 1030 SYS "OS_SerialOp",3,b%
+ 1040 ENDPROC
  1050 REM
- 1060 REM ---- replay a conversation's stored transcript ----
- 1070 DEF PROCshow
- 1080 LOCAL i%,n%,start%,h%
- 1090 n%=lc%(active%):h%=WB%-WT%-1
- 1100 start%=0:IF n%>h% THEN start%=n%-h%
- 1110 FOR i%=start% TO n%-1:PROCline(active%,i%):NEXT
- 1120 ENDPROC
- 1130 REM
- 1140 DEF PROCline(c%,i%)
- 1150 IF lk%(c%,i%)=1 THEN COLOUR 4:PRINT LEFT$(ln$(c%,i%),6);:COLOUR 0:PRINT MID$(ln$(c%,i%),7) ELSE COLOUR 0:PRINT ln$(c%,i%)
- 1160 ENDPROC
- 1170 REM
- 1180 DEF PROCprompt
- 1190 COLOUR 0:PRINT "you > ";
- 1200 q$=""
- 1210 ENDPROC
- 1220 REM
- 1230 REM ---- the key loop ----
- 1240 DEF PROCloop
- 1250 LOCAL k%
- 1260 REPEAT
- 1270   k%=GET
- 1280   CASE k% OF
- 1290     WHEN 13:PROCenter
- 1300     WHEN 8,127:PROCbksp
- 1310     WHEN 9:PROCnextconv
-  1320     WHEN 12:PROCtogglemode
-  1330     WHEN 14:PROCnewconv
-  1340     WHEN 27:quit%=TRUE
-  1350     OTHERWISE
-  1360       IF k%>=32 AND k%<127 AND LEN(q$)<48 THEN q$=q$+CHR$(k%):VDU k%
-  1370   ENDCASE
-  1380 UNTIL quit%
-  1390 ENDPROC
-  1400 REM
-  1410 DEF PROCbksp
-  1420 IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
-  1430 ENDPROC
- 1440 REM
- 1450 DEF PROCenter
- 1455 REM tx$ is global so PROCwire can rewrite it
-  1460 IF q$="" THEN PRINT:PROCprompt:ENDPROC
-  1470 PRINT
-  1480 IF q$="/quit" THEN quit%=TRUE:ENDPROC
-  1490 PROCstore(active%,"you > "+q$,0)
-  1500 PROCnotecmd(q$)
- 1505 tx$=q$:PROCwire
-  1510 PROCsend(tx$)
-  1520 PROCreceive
-  1530 PROCstore(active%,"",0)
-  1540 PRINT
-  1550 PROCprompt
-  1560 ENDPROC
-  1570 REM
-  1580 DEF PROCnextconv
-  1590 IF nconv%<=1 THEN ENDPROC
-  1600 active%=active%+1:IF active%>nconv% THEN active%=1
-  1610 PROCrefresh
-  1620 ENDPROC
-  1630 REM
-  1640 DEF PROCnewconv
-  1650 IF nconv%>=MAXC% THEN VDU 7:ENDPROC
-  1660 nconv%=nconv%+1:active%=nconv%
-  1670 cnm$(active%)="Chat "+STR$(active%):lc%(active%)=0
-  1680 PROCrefresh
-  1690 ENDPROC
-  1700 REM
-  1710 REM ---- conversation storage (array of display lines) ----
-  1720 DEF PROCstore(c%,t$,k%)
-  1730 IF lc%(c%)>=MAXL% THEN PROCdrop(c%)
-  1740 ln$(c%,lc%(c%))=t$:lk%(c%,lc%(c%))=k%:lc%(c%)=lc%(c%)+1
-  1750 ENDPROC
-  1760 REM
-  1770 DEF PROCdrop(c%)
-  1780 LOCAL j%
-  1790 FOR j%=0 TO MAXL%-2:ln$(c%,j%)=ln$(c%,j%+1):lk%(c%,j%)=lk%(c%,j%+1):NEXT
-  1795 lc%(c%)=MAXL%-1
-  1798 ENDPROC
-  1799 REM
- 1800 REM ---- send prompt over serial ----
- 1810 DEF PROCsend(t$)
- 1820 LOCAL i%
- 1830 FOR i%=1 TO LEN(t$):PROCtx(ASC(MID$(t$,i%,1))):NEXT
- 1840 PROCtx(13):PROCtx(10)
- 1850 ENDPROC
- 1860 REM
-1870 DEF PROCtx(b%)
-1880 SYS "OS_SerialOp",3,b%
-1900 ENDPROC
- 1910 REM
- 1920 REM ---- receive: stream the reply live AND store it wrapped ----
- 1930 DEF PROCreceive
- 1940 LOCAL byte%,flags%,start%,last%,got%
- 1950 cur$="arm > ":knd%=1:lastnl%=0
- 1960 COLOUR 4:PRINT "arm > ";:COLOUR 0
- 1970 start%=TIME:got%=FALSE
- 1980 REPEAT
- 1990   SYS "OS_SerialOp",4 TO ,byte%;flags%
- 2000   IF (flags% AND mask%)=0 THEN PROCrx(byte%):got%=TRUE
- 2010 UNTIL got% OR (TIME-start%>waitmax%)
- 2020 IF NOT got% THEN PRINT "(no reply)":PROCstore(active%,"arm > (no reply)",1):ENDPROC
- 2030 last%=TIME
- 2040 REPEAT
- 2050   SYS "OS_SerialOp",4 TO ,byte%;flags%
- 2060   IF (flags% AND mask%)=0 THEN PROCrx(byte%):last%=TIME
- 2070 UNTIL TIME-last%>idlegap%
- 2080 IF cur$<>"" THEN PROCstore(active%,cur$,knd%):PRINT
- 2090 ENDPROC
- 2100 REM
- 2110 DEF PROCrx(b%)
- 2120 IF b%=13 OR b%=10 THEN PROCrxnl(b%):ENDPROC
- 2130 IF b%<32 THEN ENDPROC
- 2140 lastnl%=0
- 2150 IF LEN(cur$)>=WRAP% THEN PROCbreak
- 2160 cur$=cur$+CHR$(b%):VDU b%
- 2170 ENDPROC
- 2180 REM
- 2190 DEF PROCrxnl(b%)
- 2200 IF lastnl%<>0 AND b%<>lastnl% THEN lastnl%=0:ENDPROC
- 2210 PROCbreak:lastnl%=b%
- 2220 ENDPROC
- 2230 REM
- 2240 DEF PROCbreak
- 2250 PROCstore(active%,cur$,knd%):PRINT:cur$="":knd%=0
- 2260 ENDPROC
- 2261 DEF PROCtogglemode
- 2262 LOCAL cmd$
- 2263 IF q$<>"" THEN VDU 7:ENDPROC
- 2264 IF mode$="local" THEN mode$="cloud":cmd$="/mode cloud" ELSE mode$="local":cmd$="/mode local"
- 2265 PROCmodeui:PRINT cmd$
- 2266 PROCstore(active%,"you > "+cmd$,0)
- 2267 tx$=cmd$:PROCwire:PROCsend(tx$)
- 2268 PROCreceive
- 2269 PROCstore(active%,"",0):PRINT:PROCprompt
- 2270 ENDPROC
- 2271 DEF PROCnotecmd(t$)
- 2272 IF t$="/mode local" THEN mode$="local":PROCmodeui
- 2273 IF t$="/mode cloud" OR t$="/mode codex" THEN mode$="cloud":PROCmodeui
- 2274 ENDPROC
- 2275 DEF PROCwire
- 2276 IF tx$="/mode cloud" THEN tx$="/mode codex"
- 2277 IF LEFT$(tx$,7)="/cloud " THEN tx$="/codex "+MID$(tx$,8)
- 2278 ENDPROC
- 2279 DEF PROCmodeui
- 2280 LOCAL x%,y%:x%=POS:y%=VPOS
- 2281 VDU 26:PROCstatus:PROCmenu:VDU 28,WL%,WB%,WR%,WT%:COLOUR 128+7:COLOUR 0:PRINT TAB(x%,y%);
- 2282 ENDPROC
- 2283 REM
- 2290 DEF PROCbye
- 2300 MODE oldmode%                     :REM restore the mode we started in
- 2310 SYS "OS_Byte",2,0
- 2320 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
- 2330 PRINT'"Link closed. Bye."
- 2340 END
- 2345 ENDPROC
- 2350 REM
- 2360 REM ---- full-screen splash: centres the wordmark, waits for RETURN ----
- 2370 DEF PROCbanner
- 2380 LOCAL cols%,rows%,i%,x%,y%,l$,artw%,arth%
- 2390 artw%=65:arth%=12
- 2400 SYS "OS_ReadModeVariable",-1,1 TO ,,cols%:cols%=cols%+1
- 2410 SYS "OS_ReadModeVariable",-1,2 TO ,,rows%:rows%=rows%+1
- 2420 IF cols%<artw% THEN cols%=artw%
- 2430 COLOUR 128+7:CLS               :REM white background (the Acorn default)
- 2440 x%=(cols%-artw%) DIV 2:IF x%<0 THEN x%=0
- 2450 y%=(rows%-arth%) DIV 2-2:IF y%<3 THEN y%=3
- 2460 COLOUR 0                       :REM black wordmark and rules
- 2470 PRINT TAB(0,1);STRING$(cols%-1,"=")
- 2480 PRINT TAB(0,rows%-2);STRING$(cols%-1,"=")
- 2490 RESTORE 3000
- 2500 FOR i%=0 TO arth%-1:READ l$:PROCartline(x%,y%+i%,l$):NEXT
- 2510 PROCcentre(y%+arth%+1,cols%,"ChatGPT on a 1987 Acorn Archimedes")
- 2520 PROCcentre(y%+arth%+2,cols%,"the machine that named ARM  .  now it talks back")
- 2530 PROCcentre(rows%-5,cols%,"Press RETURN to continue")
- 2540 REPEAT UNTIL GET=13
- 2550 COLOUR 0:CLS
- 2560 ENDPROC
- 2570 REM
- 2580 DEF PROCcentre(row%,cols%,t$)
- 2590 LOCAL x%:x%=(cols%-LEN(t$)) DIV 2:IF x%<0 THEN x%=0
- 2600 PRINT TAB(x%,row%);t$
- 2610 ENDPROC
- 2620 REM
- 2630 DEF PROCartline(x%,row%,t$)
- 2640 LOCAL j%
- 2650 FOR j%=1 TO LEN(t$):IF MID$(t$,j%,1)="#" THEN PRINT TAB(x%+j%-1,row%);CHR$(BLK%);
- 2660 NEXT
- 2670 ENDPROC
- 2680 REM
- 2690 REM --- "armGPT" wordmark: "#" in DATA is drawn with block char 232 ---
- 3000 DATA "                                   ######     ######   ##########"
- 3010 DATA "                                  ########   ########  ##########"
- 3020 DATA "                                 ###    ###  ###   ###     ##"
- 3030 DATA "   ####    #  ##  #  ###  ###   ###      ##  ###    ##     ##"
- 3040 DATA " #######   ###### ############  ##           ###    ##     ##"
- 3050 DATA " ##   ###  ###    ###  ###  ##  ##           #########     ##"
- 3060 DATA "      ###  ##     ##   ##   ##  ##    #####  ########      ##"
- 3070 DATA "  #######  ##     ##   ##   ##  ##      ###  ###           ##"
- 3080 DATA " ##   ###  ##     ##   ##   ##  ###      ##  ###           ##"
- 3090 DATA " ##   ###  ##     ##   ##   ##   ###     ##  ###           ##"
- 3100 DATA " ########  ##     ##   ##   ##    #########  ###           ##"
- 3110 DATA "  #### ##  ##     ##   ##   ##     ######     #            ##"
+ 1060 DEF PROCreceive
+ 1070 LOCAL byte%,flags%,start%,last%,got%
+ 1080 cur$="":lastnl%=0
+ 1090 COLOUR 4:PRINT "arm > ";:COLOUR 0
+ 1100 start%=TIME:got%=FALSE
+ 1110 REPEAT
+ 1120   PROCwait
+ 1130   SYS "OS_SerialOp",4 TO ,byte%;flags%
+ 1140   IF (flags% AND mask%)=0 THEN PROCrx(byte%):got%=TRUE
+ 1150 UNTIL got% OR (TIME-start%>waitmax%)
+ 1160 IF NOT got% THEN PRINT "(no reply)":ENDPROC
+ 1170 last%=TIME
+ 1180 REPEAT
+ 1190   PROCwait
+ 1200   SYS "OS_SerialOp",4 TO ,byte%;flags%
+ 1210   IF (flags% AND mask%)=0 THEN PROCrx(byte%):last%=TIME
+ 1220 UNTIL TIME-last%>idlegap%
+ 1230 IF cur$<>"" THEN PRINT
+ 1240 ENDPROC
+ 1250 REM
+ 1260 DEF PROCwait
+ 1270 SYS "OS_Byte",19
+ 1280 ENDPROC
+ 1290 REM
+ 1300 DEF PROCrx(b%)
+ 1310 IF b%=13 OR b%=10 THEN PROCrxnl(b%):ENDPROC
+ 1320 IF b%<32 THEN ENDPROC
+ 1330 lastnl%=0
+ 1340 cur$=cur$+CHR$(b%)
+ 1350 VDU b%
+ 1360 IF LEN(cur$)>78 THEN PRINT:cur$=""
+ 1370 ENDPROC
+ 1380 REM
+ 1390 DEF PROCrxnl(b%)
+ 1400 IF lastnl%<>0 AND b%<>lastnl% THEN lastnl%=0:ENDPROC
+ 1410 PRINT:cur$="":lastnl%=b%
+ 1420 ENDPROC
+ 1430 REM
+ 1440 REM ==================== exit ====================
+ 1450 DEF PROCbye
+ 1460 SYS "OS_Byte",2,0
+ 1470 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
+ 1480 PRINT "Link closed. Bye."
+ 1490 END
+ 1500 ENDPROC
