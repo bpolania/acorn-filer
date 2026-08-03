@@ -4,7 +4,7 @@
    40 REM  - type at "you >" and press RETURN; the reply streams back
    50 REM  - TAB switches conversation, Ctrl-N starts a new one
    60 REM  - Ctrl-L toggles local/cloud server mode
-   70 REM  - ESCAPE quits (the AI itself has no cross-message memory;
+   70 REM  - /quit exits (the AI itself has no cross-message memory;
    80 REM    conversations are a local grouping on the Acorn side)
    90 REM
   100 ON ERROR PROCbye
@@ -87,7 +87,7 @@
   860 PRINT TAB(2,WB%-4);"TAB  switch";
   870 PRINT TAB(2,WB%-3);CHR$(94);"N   new chat";
   875 PRINT TAB(2,WB%-2);CHR$(94);"L   mode";
-  880 PRINT TAB(2,WB%-1);"ESC  quit";
+  880 PRINT TAB(2,WB%-1);"          ";
   885 ENDPROC
   890 REM
   900 DEF PROCitemon(i%)
@@ -134,7 +134,7 @@
  1310     WHEN 9:PROCnextconv
   1320     WHEN 12:PROCtogglemode
   1330     WHEN 14:PROCnewconv
-  1340     WHEN 27:quit%=TRUE
+  1340     WHEN 27:VDU 7
   1350     OTHERWISE
   1360       IF k%>=32 AND k%<127 AND LEN(q$)<maxin% THEN q$=q$+CHR$(k%):PROCqchar(k%)
   1370   ENDCASE
