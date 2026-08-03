@@ -46,103 +46,126 @@
   480 REM
   490 DEF PROCprompt
   500 q$=""
-  510 COLOUR 0:PRINT "you (";mode$;") > ";
+  510 PROCshowprompt
   520 REPEAT
   530   k%=GET
   540   CASE k% OF
   550     WHEN 13:PRINT:done%=TRUE
-  560     WHEN 8,127:IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
-  570     WHEN 12:PRINT:PROCtogglemode:PRINT:COLOUR 0:PRINT "you (";mode$;") > ";q$;
+  560     WHEN 8,127:PROCbksp
+  570     WHEN 12:PRINT:PROCtogglemode:PRINT:PROCredrawinput
   580     WHEN 27:q$="/quit":PRINT "/quit":done%=TRUE
   590     OTHERWISE
-  600       IF k%>=32 AND k%<127 AND LEN(q$)<maxin% THEN q$=q$+CHR$(k%):VDU k%
+  600       IF k%>=32 AND k%<127 AND LEN(q$)<maxin% THEN q$=q$+CHR$(k%):PROCqchar(k%)
   610   ENDCASE
   620 UNTIL done%
   630 done%=FALSE
   640 ENDPROC
   650 REM
-  660 DEF PROCsubmit
-  670 IF q$="" THEN ENDPROC
-  680 IF q$="/quit" THEN quit%=TRUE:ENDPROC
-  690 PROCnotecmd(q$)
-  700 tx$=q$:PROCwire
-  710 PROCsend(tx$)
-  720 PROCreceive
-  730 ENDPROC
-  740 REM
-  750 DEF PROCtogglemode
-  760 LOCAL cmd$
-  770 IF mode$="local" THEN cmd$="/mode cloud" ELSE cmd$="/mode local"
-  780 PRINT "you > ";cmd$
-  790 PROCnotecmd(cmd$)
-  800 tx$=cmd$:PROCwire
-  810 PROCsend(tx$)
-  820 PROCreceive
-  830 ENDPROC
-  840 REM
-  850 DEF PROCnotecmd(t$)
-  860 IF t$="/mode local" THEN mode$="local"
-  870 IF t$="/mode cloud" OR t$="/mode codex" THEN mode$="cloud"
-  880 ENDPROC
-  890 REM
-  900 DEF PROCwire
-  910 IF tx$="/mode cloud" THEN tx$="/mode codex"
-  920 IF LEFT$(tx$,7)="/cloud " THEN tx$="/codex "+MID$(tx$,8)
-  930 ENDPROC
-  940 REM
-  950 REM ==================== serial send/receive ====================
-  960 DEF PROCsend(t$)
-  970 LOCAL i%
-  980 FOR i%=1 TO LEN(t$):PROCtx(ASC(MID$(t$,i%,1))):NEXT
-  990 PROCtx(13):PROCtx(10)
- 1000 ENDPROC
- 1010 REM
- 1020 DEF PROCtx(b%)
- 1030 SYS "OS_SerialOp",3,b%
- 1040 ENDPROC
- 1050 REM
- 1060 DEF PROCreceive
- 1070 LOCAL byte%,flags%,start%,last%,got%
- 1080 cur$="":lastnl%=0
- 1090 COLOUR 4:PRINT "arm > ";:COLOUR 0
- 1100 start%=TIME:got%=FALSE
- 1110 REPEAT
- 1120   PROCwait
- 1130   SYS "OS_SerialOp",4 TO ,byte%;flags%
- 1140   IF (flags% AND mask%)=0 THEN PROCrx(byte%):got%=TRUE
- 1150 UNTIL got% OR (TIME-start%>waitmax%)
- 1160 IF NOT got% THEN PRINT "(no reply)":ENDPROC
- 1170 last%=TIME
- 1180 REPEAT
- 1190   PROCwait
- 1200   SYS "OS_SerialOp",4 TO ,byte%;flags%
- 1210   IF (flags% AND mask%)=0 THEN PROCrx(byte%):last%=TIME
- 1220 UNTIL TIME-last%>idlegap%
- 1230 IF cur$<>"" THEN PRINT
- 1240 ENDPROC
- 1250 REM
- 1260 DEF PROCwait
- 1270 SYS "OS_Byte",19
- 1280 ENDPROC
- 1290 REM
- 1300 DEF PROCrx(b%)
- 1310 IF b%=13 OR b%=10 THEN PROCrxnl(b%):ENDPROC
- 1320 IF b%<32 THEN ENDPROC
- 1330 lastnl%=0
- 1340 cur$=cur$+CHR$(b%)
- 1350 VDU b%
- 1360 IF LEN(cur$)>78 THEN PRINT:cur$=""
- 1370 ENDPROC
- 1380 REM
- 1390 DEF PROCrxnl(b%)
- 1400 IF lastnl%<>0 AND b%<>lastnl% THEN lastnl%=0:ENDPROC
- 1410 PRINT:cur$="":lastnl%=b%
- 1420 ENDPROC
- 1430 REM
- 1440 REM ==================== exit ====================
- 1450 DEF PROCbye
- 1460 SYS "OS_Byte",2,0
- 1470 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
- 1480 PRINT "Link closed. Bye."
- 1490 END
- 1500 ENDPROC
+  660 DEF PROCshowprompt
+  670 prompt$="you ("+mode$+") > "
+  680 COLOUR 0:PRINT prompt$;
+  690 qcol%=LEN(prompt$)
+  700 ENDPROC
+  710 REM
+  720 DEF PROCqchar(b%)
+  730 IF qcol%>=78 THEN PRINT:qcol%=0
+  740 VDU b%:qcol%=qcol%+1
+  750 ENDPROC
+  760 REM
+  770 DEF PROCbksp
+  780 IF LEN(q$)=0 THEN ENDPROC
+  790 IF qcol%=0 THEN VDU 7:ENDPROC
+  800 q$=LEFT$(q$,LEN(q$)-1):qcol%=qcol%-1:VDU 8,32,8
+  810 ENDPROC
+  820 REM
+  830 DEF PROCredrawinput
+  840 LOCAL i%
+  850 PROCshowprompt
+  860 FOR i%=1 TO LEN(q$):PROCqchar(ASC(MID$(q$,i%,1))):NEXT
+  870 ENDPROC
+  880 REM
+  890 DEF PROCsubmit
+  900 IF q$="" THEN ENDPROC
+  910 IF q$="/quit" THEN quit%=TRUE:ENDPROC
+  920 PROCnotecmd(q$)
+  930 tx$=q$:PROCwire
+  940 PROCsend(tx$)
+  950 PROCreceive
+  960 ENDPROC
+  970 REM
+  980 DEF PROCtogglemode
+  990 LOCAL cmd$
+ 1000 IF mode$="local" THEN cmd$="/mode cloud" ELSE cmd$="/mode local"
+ 1010 PRINT "you > ";cmd$
+ 1020 PROCnotecmd(cmd$)
+ 1030 tx$=cmd$:PROCwire
+ 1040 PROCsend(tx$)
+ 1050 PROCreceive
+ 1060 ENDPROC
+ 1070 REM
+ 1080 DEF PROCnotecmd(t$)
+ 1090 IF t$="/mode local" THEN mode$="local"
+ 1100 IF t$="/mode cloud" OR t$="/mode codex" THEN mode$="cloud"
+ 1110 ENDPROC
+ 1120 REM
+ 1130 DEF PROCwire
+ 1140 IF tx$="/mode cloud" THEN tx$="/mode codex"
+ 1150 IF LEFT$(tx$,7)="/cloud " THEN tx$="/codex "+MID$(tx$,8)
+ 1160 ENDPROC
+ 1170 REM
+ 1180 REM ==================== serial send/receive ====================
+ 1190 DEF PROCsend(t$)
+ 1200 LOCAL i%
+ 1210 FOR i%=1 TO LEN(t$):PROCtx(ASC(MID$(t$,i%,1))):NEXT
+ 1220 PROCtx(13):PROCtx(10)
+ 1230 ENDPROC
+ 1240 REM
+ 1250 DEF PROCtx(b%)
+ 1260 SYS "OS_SerialOp",3,b%
+ 1270 ENDPROC
+ 1280 REM
+ 1290 DEF PROCreceive
+ 1300 LOCAL byte%,flags%,start%,last%,got%
+ 1310 cur$="":lastnl%=0
+ 1320 COLOUR 4:PRINT "arm > ";:COLOUR 0
+ 1330 start%=TIME:got%=FALSE
+ 1340 REPEAT
+ 1350   PROCwait
+ 1360   SYS "OS_SerialOp",4 TO ,byte%;flags%
+ 1370   IF (flags% AND mask%)=0 THEN PROCrx(byte%):got%=TRUE
+ 1380 UNTIL got% OR (TIME-start%>waitmax%)
+ 1390 IF NOT got% THEN PRINT "(no reply)":ENDPROC
+ 1400 last%=TIME
+ 1410 REPEAT
+ 1420   PROCwait
+ 1430   SYS "OS_SerialOp",4 TO ,byte%;flags%
+ 1440   IF (flags% AND mask%)=0 THEN PROCrx(byte%):last%=TIME
+ 1450 UNTIL TIME-last%>idlegap%
+ 1460 IF cur$<>"" THEN PRINT
+ 1470 ENDPROC
+ 1480 REM
+ 1490 DEF PROCwait
+ 1500 SYS "OS_Byte",19
+ 1510 ENDPROC
+ 1520 REM
+ 1530 DEF PROCrx(b%)
+ 1540 IF b%=13 OR b%=10 THEN PROCrxnl(b%):ENDPROC
+ 1550 IF b%<32 THEN ENDPROC
+ 1560 lastnl%=0
+ 1570 cur$=cur$+CHR$(b%)
+ 1580 VDU b%
+ 1590 IF LEN(cur$)>78 THEN PRINT:cur$=""
+ 1600 ENDPROC
+ 1610 REM
+ 1620 DEF PROCrxnl(b%)
+ 1630 IF lastnl%<>0 AND b%<>lastnl% THEN lastnl%=0:ENDPROC
+ 1640 PRINT:cur$="":lastnl%=b%
+ 1650 ENDPROC
+ 1660 REM
+ 1670 REM ==================== exit ====================
+ 1680 DEF PROCbye
+ 1690 SYS "OS_Byte",2,0
+ 1700 IF ERR<>0 AND ERR<>17 THEN PRINT'"Error ";ERR;": ";REPORT$;" at line ";ERL
+ 1710 PRINT "Link closed. Bye."
+ 1720 END
+ 1730 ENDPROC
