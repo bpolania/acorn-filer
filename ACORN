@@ -40,7 +40,7 @@
  400 waitmax%=12000:idlegap%=300       :REM reply-start (120s, cloud) / idle (3s), cs
  410 SBW%=24:WL%=24:WR%=79:WT%=1:WB%=31:WRAP%=55
   420 MAXC%=6:MAXL%=60
-  430 mask%=&02:DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
+  430 mask%=&02:maxin%=180:DIM ln$(MAXC%,MAXL%),lk%(MAXC%,MAXL%),lc%(MAXC%),cnm$(MAXC%)
   440 ENDPROC
   450 REM
   460 DEF PROCinit
@@ -120,7 +120,7 @@
  1170 REM
  1180 DEF PROCprompt
  1190 COLOUR 0:PRINT "you > ";
- 1200 q$=""
+ 1200 q$="":qcol%=6
  1210 ENDPROC
  1220 REM
  1230 REM ---- the key loop ----
@@ -136,21 +136,26 @@
   1330     WHEN 14:PROCnewconv
   1340     WHEN 27:quit%=TRUE
   1350     OTHERWISE
-  1360       IF k%>=32 AND k%<127 AND LEN(q$)<48 THEN q$=q$+CHR$(k%):VDU k%
+  1360       IF k%>=32 AND k%<127 AND LEN(q$)<maxin% THEN q$=q$+CHR$(k%):PROCqchar(k%)
   1370   ENDCASE
   1380 UNTIL quit%
   1390 ENDPROC
   1400 REM
-  1410 DEF PROCbksp
-  1420 IF LEN(q$)>0 THEN q$=LEFT$(q$,LEN(q$)-1):VDU 8,32,8
-  1430 ENDPROC
- 1440 REM
+ 1410 DEF PROCbksp
+  1420 IF LEN(q$)=0 THEN ENDPROC
+  1430 IF qcol%=0 THEN VDU 7:ENDPROC
+  1440 q$=LEFT$(q$,LEN(q$)-1):qcol%=qcol%-1:VDU 8,32,8
+ 1445 ENDPROC
+ 1446 REM
+ 1447 DEF PROCqchar(b%)
+1448 IF qcol%>=WRAP% THEN PRINT:qcol%=0
+ 1449 VDU b%:qcol%=qcol%+1:ENDPROC
  1450 DEF PROCenter
  1455 REM tx$ is global so PROCwire can rewrite it
   1460 IF q$="" THEN PRINT:PROCprompt:ENDPROC
   1470 PRINT
   1480 IF q$="/quit" THEN quit%=TRUE:ENDPROC
-  1490 PROCstore(active%,"you > "+q$,0)
+  1490 PROCstoreprompt(active%,q$)
   1500 PROCnotecmd(q$)
  1505 tx$=q$:PROCwire
   1510 PROCsend(tx$)
@@ -178,6 +183,13 @@
   1730 IF lc%(c%)>=MAXL% THEN PROCdrop(c%)
   1740 ln$(c%,lc%(c%))=t$:lk%(c%,lc%(c%))=k%:lc%(c%)=lc%(c%)+1
   1750 ENDPROC
+ 1751 DEF PROCstoreprompt(c%,t$)
+ 1752 LOCAL p$,s%,chunk%
+ 1753 p$="you > ":chunk%=WRAP%-LEN(p$)
+ 1754 PROCstore(c%,p$+LEFT$(t$,chunk%),0):s%=chunk%+1
+ 1755 IF s%>LEN(t$) THEN ENDPROC
+ 1756 REPEAT:PROCstore(c%,MID$(t$,s%,WRAP%),0):s%=s%+WRAP%:UNTIL s%>LEN(t$)
+ 1757 ENDPROC
   1760 REM
   1770 DEF PROCdrop(c%)
   1780 LOCAL j%
